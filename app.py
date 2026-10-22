@@ -104,7 +104,8 @@ div[data-testid="stAlert"] { border-radius: 14px; font-size: 14.5px; }
 .sx-chip { display: inline-block; background: #F5F5F7; border: 1px solid rgba(0,0,0,.04);
   border-radius: 980px; padding: 3px 11px; margin: 2px 4px 2px 0;
   font-size: 12.5px; color: #1D1D1F; }
-.sx-hero-title { font-size: 29px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
+.sx-hero-title { font-size: 29px; font-weight: 800; letter-spacing: -0.02em;
+  line-height: 1.45; padding: 4px 0 2px; margin: 0; }
 .sx-sub { color: #6E6E73; font-size: 14.5px; margin: 5px 0 18px; line-height: 1.55; }
 .sx-ledger-head { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
 .sx-sec { font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
@@ -116,9 +117,9 @@ div[data-testid="stAlert"] { border-radius: 14px; font-size: 14.5px; }
   color: #6E6E73; font-size: 14px; line-height: 1.65; text-align: center;
 }
 .sx-reasons { background: #FFFFFF; border: 1px solid rgba(0,0,0,.05);
-  border-radius: 16px; padding: 14px 22px 14px 8px; margin: 4px 0 12px;
+  border-radius: 16px; padding: 14px 22px; margin: 4px 0 12px;
   box-shadow: 0 2px 12px rgba(0,0,0,.04); }
-.sx-reasons ul { margin: 0; }
+.sx-reasons ul { margin: 0; padding-left: 20px; }
 .sx-reasons li { font-size: 14.5px; line-height: 1.6; margin: 3px 0; }
 </style>
 """
@@ -278,7 +279,7 @@ def page_register(ledger, packages, actors):
                                    up.name, data)
                 st.session_state["last_cert"] = cert
                 st.rerun()
-            except ValueError as e:
+            except Exception as e:
                 st.error(str(e))
     cert = st.session_state.get("last_cert")
     if cert:
@@ -306,6 +307,14 @@ def page_register(ledger, packages, actors):
                             + "；".join(i["msg"] for i in p["reg_audit"]))
             with col2:
                 st.image(cert_qr_png(cert, p), caption="凭证二维码", width=180)
+    regs = registrations(ledger)
+    if regs:
+        st.markdown('<div class="sx-sec">已登记凭证</div>',
+                    unsafe_allow_html=True)
+        rows = [{"凭证": p["cert_id"], "文件": p["filename"],
+                 "登记主体": p["registrar"], "字段数": len(p["field_keys"])}
+                for p in regs]
+        st.dataframe(rows, use_container_width=True, hide_index=True)
 
 
 # ---------------------------------------------------------------- 页面: 验真
@@ -372,7 +381,8 @@ def page_verify(ledger, packages, actors):
                     st.write(f"登记 {len(rp_h)} 页 / 待验 {len(cp_h)} 页"
                              "（页数不一致时感知哈希不参与判定）")
                 sim = fp.text_similarity(rp_text(ledger, packages, cert), comp["text"])
-                st.write(f"文本相似度（3-gram Jaccard）：{sim if sim is not None else '不可用'}（阈值 ≥ 0.90）")
+                sim_txt = f"{sim:.4f}" if sim is not None else "不可用"
+                st.write(f"文本相似度（3-gram Jaccard）：{sim_txt}（阈值 ≥ 0.90）")
                 st.markdown("**第三层 · 语义字段**")
                 pkg = packages.get(cert)
                 rows = []
@@ -414,10 +424,13 @@ def page_verify(ledger, packages, actors):
                         mime="application/json")
                 with c2:
                     if st.button("复核这份报告"):
-                        if svc.verify_report(ledger, report):
-                            st.success("复核通过：报告未被篡改，且与账本回执一致。")
-                        else:
-                            st.error("复核不通过：报告与账本不一致。")
+                        st.session_state["review_ok"] = svc.verify_report(
+                            ledger, report)
+                if "review_ok" in st.session_state:
+                    if st.session_state.pop("review_ok"):
+                        st.success("复核通过：报告未被篡改，且与账本回执一致。")
+                    else:
+                        st.error("复核不通过：报告与账本不一致。")
 
     st.markdown('<div class="sx-sec">批量验真</div>', unsafe_allow_html=True)
     st.markdown('<div class="sx-sec-sub">一次上传多份文件：按文件名自动匹配凭证，五十份也是一张表。</div>',
