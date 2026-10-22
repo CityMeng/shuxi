@@ -70,7 +70,7 @@ html, body, [class*="css"], .stApp {
   background-attachment: fixed;
 }
 #MainMenu, footer, [data-testid="stDecoration"] { visibility: hidden; }
-.block-container { max-width: 940px; padding-top: 1.8rem; padding-bottom: 3.5rem; }
+.block-container { max-width: 940px; padding-top: 2.6rem; padding-bottom: 3.5rem; }
 h1 { font-size: 28px !important; }
 h2 { font-size: 21px !important; }
 h3 { font-size: 16.5px !important; }
@@ -84,7 +84,8 @@ section[data-testid="stSidebar"] {
   background: linear-gradient(180deg, #0A1120, #080D18);
   border-right: 1px solid rgba(148,163,184,.14);
 }
-.sx-brand { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #F2F6FC; }
+.sx-brand { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #F2F6FC;
+  line-height: 1.5; padding-top: 4px; }
 .sx-brand-sub { font-size: 12.5px; color: #8CA0BE; line-height: 1.5; margin: 2px 0 6px; }
 .sx-brand-bar { height: 3px; border-radius: 2px; margin: 9px 0 5px;
   background: linear-gradient(90deg, #6366F1, #A855F7, #22D3EE, #34D399); }
@@ -125,10 +126,12 @@ div[data-testid="stAlert"] { border-radius: 14px; font-size: 14.5px; }
 }
 .sx-hero-card { display: flex; justify-content: space-between;
   align-items: center; gap: 18px; }
-.sx-grade { font-size: 44px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+.sx-grade { font-size: 44px; font-weight: 800; letter-spacing: -0.02em;
+  line-height: 1.3; padding: 3px 0; }
 .sx-conf { font-size: 15px; color: #8CA0BE; margin-top: 2px; }
 .sx-cert-id { font-family: "SF Mono", ui-monospace, Menlo, monospace;
-  font-size: 25px; font-weight: 700; letter-spacing: .02em; color: #F2F6FC; }
+  font-size: 25px; font-weight: 700; letter-spacing: .02em; color: #F2F6FC;
+  line-height: 1.45; padding: 2px 0; }
 .sx-mono { font-family: "SF Mono", ui-monospace, Menlo, monospace;
   font-size: 12px; line-height: 1.6; word-break: break-all; color: #A9BCD9; }
 .sx-label { font-size: 11.5px; font-weight: 600; color: #7D8DB0;
@@ -137,11 +140,13 @@ div[data-testid="stAlert"] { border-radius: 14px; font-size: 14.5px; }
   border: 1px solid rgba(99,102,241,.30); border-radius: 980px;
   padding: 3px 11px; margin: 2px 4px 2px 0; font-size: 12.5px; color: #C7D2FE; }
 .sx-hero-title { font-size: 29px; font-weight: 800; letter-spacing: -0.02em;
-  line-height: 1.45; padding: 4px 0 2px; margin: 0; color: #F2F6FC; }
+  line-height: 1.65; padding: 10px 0 4px; margin: 0; color: #F2F6FC; }
 .sx-sub { color: #8CA0BE; font-size: 14.5px; margin: 5px 0 18px; line-height: 1.55; }
-.sx-ledger-head { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; color: #F2F6FC; }
+.sx-ledger-head { font-size: 19px; font-weight: 700; letter-spacing: -0.01em;
+  color: #F2F6FC; line-height: 1.55; padding: 2px 0; }
 .sx-sec { font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
-  margin: 30px 0 4px; color: #F2F6FC; position: relative; padding-left: 14px; }
+  line-height: 1.55; padding: 2px 0 2px 14px;
+  margin: 30px 0 4px; color: #F2F6FC; position: relative; }
 .sx-sec::before { content: ""; position: absolute; left: 0; top: 4px; bottom: 4px;
   width: 4px; border-radius: 2px;
   background: linear-gradient(180deg, #6366F1, #22D3EE); }
