@@ -3,12 +3,13 @@
 数玺 · 数据可信管理工具 (原型)
 三页: 登记 / 验真 / 授权与账本 — 实现《数玺协议规范 v1.3》。
 
-设计语言: 「曜石」Apple Pro 深色系 (依据 HIG 深色规范与 GitHub 上的
-苹果设计规范 DESIGN.md) — 纯黑底 #000 + 深灰玻璃面 #1C1C1E、文字
-#F5F5F7、深色专用强调蓝 #2997FF (#0071E3 在黑底对比度不足, 规范明示);
-卡片不用阴影分层, 全系统唯一的戏剧阴影给标志性元素「玺印」: 验真结论
-与登记凭证以朱红玺印封缄 (落印动画), 等级印于印面。
-界面层 (深色 CSS + 空状态引导 + 玺印) 于 2026-10-22 整体重做。
+设计语言: 「深链」专业数据平台深色系 (依据 Linear/Vercel 分层明度、
+Ant Design 多色相语义色板、Grafana 深色数据色规范) — 深空军蓝底
+#060A13 + 三色环境光晕 + 蓝图网格; 玻璃卡片 (渐变发丝边 + 内顶高光);
+主色靛蓝→青渐变; 语义色全套 (翠/天蓝/琥珀/玫红/紫); 顶部状态条
+(Linear 状态点 + 等宽数字) 与账本链可视化拉满信息密度; 标志性元素
+「玺印」保留: 验真结论与登记凭证以朱红玺印封缄 (落印动画)。
+界面层于 2026-10-22 三度重做 (浅色 → 苹果深色 → 深链平台风)。
 
 数据目录: 环境变量 SHUXI_DATA_DIR, 缺省为项目下 data/。
 演示口令: 环境变量 SHUXI_DEMO_PASS, 缺省 shuxi-demo (原型演示用,
@@ -37,10 +38,10 @@ DEMO_PASS = os.environ.get("SHUXI_DEMO_PASS", "shuxi-demo")
 REGISTRAR_NAME = "示例新能源有限公司 · 财务部"
 VERIFIER_NAME = "合作银行 · 核验岗"
 
-GRADE_COLORS = {  # Apple 深色系统色 (HIG dark variants)
-    "甲级": "#30D158", "乙级": "#0A84FF", "丙级": "#FF9F0A",
-    "丁级": "#FF453A", "丁级嫌疑": "#FF453A", "待人工复核": "#98989F",
-    "已作废": "#98989F", "未登记": "#98989F",
+GRADE_COLORS = {  # 深色数据色板 (Grafana/Ant 式深色专调高饱和语义色)
+    "甲级": "#34D399", "乙级": "#38BDF8", "丙级": "#FBBF24",
+    "丁级": "#FB7185", "丁级嫌疑": "#FB7185", "待人工复核": "#A78BFA",
+    "已作废": "#94A3B8", "未登记": "#94A3B8",
 }
 
 SEAL_TEXT = {  # 玺印印面文字 (竖排两字)
@@ -54,46 +55,57 @@ CSS = """
 html, body, [class*="css"], .stApp {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
                "PingFang SC", "Microsoft YaHei", sans-serif !important;
-  color: #F5F5F7;
+  color: #E6EAF2;
   -webkit-font-smoothing: antialiased;
 }
 .stApp {
-  background-color: #000000;
+  background-color: #060A13;
   background-image:
-    radial-gradient(1100px 520px at 50% -8%, rgba(41,151,255,.13), rgba(0,0,0,0) 60%),
-    radial-gradient(900px 500px at 88% 0%, rgba(162,89,255,.07), rgba(0,0,0,0) 55%);
+    radial-gradient(1000px 480px at 12% -6%, rgba(99,102,241,.20), rgba(0,0,0,0) 58%),
+    radial-gradient(900px 460px at 88% -4%, rgba(34,211,238,.12), rgba(0,0,0,0) 55%),
+    radial-gradient(760px 520px at 55% 112%, rgba(167,139,250,.10), rgba(0,0,0,0) 60%),
+    linear-gradient(rgba(148,163,184,.045) 1px, rgba(0,0,0,0) 1px),
+    linear-gradient(90deg, rgba(148,163,184,.045) 1px, rgba(0,0,0,0) 1px);
+  background-size: auto, auto, auto, 44px 44px, 44px 44px;
   background-attachment: fixed;
 }
 #MainMenu, footer, [data-testid="stDecoration"] { visibility: hidden; }
-.block-container { max-width: 920px; padding-top: 1.8rem; padding-bottom: 3.5rem; }
+.block-container { max-width: 940px; padding-top: 1.8rem; padding-bottom: 3.5rem; }
 h1 { font-size: 28px !important; }
 h2 { font-size: 21px !important; }
 h3 { font-size: 16.5px !important; }
-h1, h2, h3 { letter-spacing: -0.015em; font-weight: 700; color: #F5F5F7; }
+h1, h2, h3 { letter-spacing: -0.015em; font-weight: 700; color: #E6EAF2; }
 p, li, label, .stMarkdown { font-size: 15px; line-height: 1.55; }
-[data-testid="stCaptionContainer"] p { font-size: 13px !important; color: #86868B !important; }
-hr { margin: 1.6rem 0 !important; border-color: rgba(255,255,255,.09) !important; }
+[data-testid="stCaptionContainer"] p { font-size: 13px !important; color: #8CA0BE !important; }
+hr { margin: 1.6rem 0 !important; border-color: rgba(148,163,184,.14) !important; }
 
 /* 侧栏 */
 section[data-testid="stSidebar"] {
-  background: #101012; border-right: 1px solid rgba(255,255,255,.07);
+  background: linear-gradient(180deg, #0A1120, #080D18);
+  border-right: 1px solid rgba(148,163,184,.14);
 }
-.sx-brand { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #F5F5F7; }
-.sx-brand-sub { font-size: 12.5px; color: #86868B; line-height: 1.5; margin: 2px 0 6px; }
+.sx-brand { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #F2F6FC; }
+.sx-brand-sub { font-size: 12.5px; color: #8CA0BE; line-height: 1.5; margin: 2px 0 6px; }
 .sx-brand-bar { height: 3px; border-radius: 2px; margin: 9px 0 5px;
-  background: linear-gradient(90deg, #0090FF, #A259FF, #FF6482, #FF9F0A); }
+  background: linear-gradient(90deg, #6366F1, #A855F7, #22D3EE, #34D399); }
 div[data-testid="stRadio"] label { font-size: 14.5px; }
 
 /* 控件 */
 .stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {
   border-radius: 980px; padding: 0.42rem 1.35rem; font-weight: 600;
-  font-size: 14.5px; border: 1px solid rgba(255,255,255,.14);
+  font-size: 14.5px; border: 1px solid rgba(148,163,184,.25);
   transition: all .18s ease;
 }
 .stButton > button:hover, .stDownloadButton > button:hover,
-.stFormSubmitButton > button:hover { opacity: .88; transform: translateY(-1px); }
+.stFormSubmitButton > button:hover { opacity: .9; transform: translateY(-1px); }
+button[data-testid="stBaseButton-primary"],
+button[data-testid="stBaseButton-primaryFormSubmit"] {
+  background: linear-gradient(135deg, #6366F1, #2563EB 55%, #0891B2) !important;
+  border: none !important; color: #FFFFFF !important;
+  box-shadow: 0 8px 22px rgba(79,70,229,.35);
+}
 div[data-testid="stExpander"] {
-  background: #161617; border: 1px solid rgba(255,255,255,.08);
+  background: rgba(13,20,38,.78); border: 1px solid rgba(148,163,184,.16);
   border-radius: 16px;
 }
 div[data-testid="stExpander"] summary { font-size: 14.5px; font-weight: 600; }
@@ -101,54 +113,85 @@ div[data-baseweb="select"] > div, div[data-testid="stFileUploader"] section {
   border-radius: 12px !important;
 }
 .stDataFrame { border-radius: 12px; overflow: hidden;
-  border: 1px solid rgba(255,255,255,.08); }
+  border: 1px solid rgba(148,163,184,.16); }
 div[data-testid="stAlert"] { border-radius: 14px; font-size: 14.5px; }
 
-/* 数玺组件 (曜石深色: 卡片不用阴影分层, 靠表面色差; 唯一的戏剧阴影给玺印) */
+/* 卡片: 玻璃面 + 渐变发丝边 + 内顶高光 (分层靠明度, 不靠平面色) */
 .sx-card {
-  background: linear-gradient(180deg, #1D1D20, #17171A);
-  border: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(165deg, rgba(99,102,241,.12), rgba(13,20,38,.88) 44%, rgba(34,211,238,.05));
+  border: 1px solid rgba(148,163,184,.18);
   border-radius: 18px; padding: 22px 26px; margin: 12px 0;
+  box-shadow: 0 18px 40px rgba(2,6,17,.5), inset 0 1px 0 rgba(255,255,255,.07);
 }
 .sx-hero-card { display: flex; justify-content: space-between;
-  align-items: center; gap: 18px;
-  box-shadow: 0 24px 48px rgba(0,0,0,.5); }
+  align-items: center; gap: 18px; }
 .sx-grade { font-size: 44px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
-.sx-conf { font-size: 15px; color: #86868B; margin-top: 2px; }
+.sx-conf { font-size: 15px; color: #8CA0BE; margin-top: 2px; }
 .sx-cert-id { font-family: "SF Mono", ui-monospace, Menlo, monospace;
-  font-size: 25px; font-weight: 700; letter-spacing: .02em; color: #F5F5F7; }
+  font-size: 25px; font-weight: 700; letter-spacing: .02em; color: #F2F6FC; }
 .sx-mono { font-family: "SF Mono", ui-monospace, Menlo, monospace;
-  font-size: 12px; line-height: 1.6; word-break: break-all; color: #AEAEB2; }
-.sx-label { font-size: 11.5px; font-weight: 600; color: #86868B;
+  font-size: 12px; line-height: 1.6; word-break: break-all; color: #A9BCD9; }
+.sx-label { font-size: 11.5px; font-weight: 600; color: #7D8DB0;
   letter-spacing: .07em; margin-bottom: 3px; }
-.sx-chip { display: inline-block; background: #2C2C2E;
-  border: 1px solid rgba(255,255,255,.06); border-radius: 980px;
-  padding: 3px 11px; margin: 2px 4px 2px 0; font-size: 12.5px; color: #F5F5F7; }
+.sx-chip { display: inline-block; background: rgba(99,102,241,.13);
+  border: 1px solid rgba(99,102,241,.30); border-radius: 980px;
+  padding: 3px 11px; margin: 2px 4px 2px 0; font-size: 12.5px; color: #C7D2FE; }
 .sx-hero-title { font-size: 29px; font-weight: 800; letter-spacing: -0.02em;
-  line-height: 1.45; padding: 4px 0 2px; margin: 0; color: #F5F5F7; }
-.sx-sub { color: #86868B; font-size: 14.5px; margin: 5px 0 18px; line-height: 1.55; }
-.sx-ledger-head { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; color: #F5F5F7; }
+  line-height: 1.45; padding: 4px 0 2px; margin: 0; color: #F2F6FC; }
+.sx-sub { color: #8CA0BE; font-size: 14.5px; margin: 5px 0 18px; line-height: 1.55; }
+.sx-ledger-head { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; color: #F2F6FC; }
 .sx-sec { font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
-  margin: 30px 0 4px; color: #F5F5F7; }
-.sx-sec-sub { font-size: 13.5px; color: #86868B; margin-bottom: 10px; }
+  margin: 30px 0 4px; color: #F2F6FC; position: relative; padding-left: 14px; }
+.sx-sec::before { content: ""; position: absolute; left: 0; top: 4px; bottom: 4px;
+  width: 4px; border-radius: 2px;
+  background: linear-gradient(180deg, #6366F1, #22D3EE); }
+.sx-sec-sub { font-size: 13.5px; color: #8CA0BE; margin-bottom: 10px; padding-left: 14px; }
 .sx-empty {
-  background: rgba(255,255,255,.03); border: 1.5px dashed rgba(255,255,255,.18);
+  background: rgba(99,102,241,.05); border: 1.5px dashed rgba(129,140,248,.35);
   border-radius: 16px; padding: 22px 24px; margin: 10px 0 6px;
-  color: #98989F; font-size: 14px; line-height: 1.65; text-align: center;
+  color: #93A5C4; font-size: 14px; line-height: 1.65; text-align: center;
 }
-.sx-reasons { background: #1C1C1E; border: 1px solid rgba(255,255,255,.08);
+.sx-reasons { background: rgba(13,20,38,.85); border: 1px solid rgba(148,163,184,.16);
   border-radius: 16px; padding: 14px 22px; margin: 4px 0 12px; }
 .sx-reasons ul { margin: 0; padding-left: 20px; }
-.sx-reasons li { font-size: 14.5px; line-height: 1.6; margin: 3px 0; color: #F5F5F7; }
+.sx-reasons li { font-size: 14.5px; line-height: 1.6; margin: 3px 0; color: #E6EAF2; }
 
-/* 标志性功能: 玺印 — 结论与凭证以印封缄, 落印动画 */
+/* 顶部状态条 (Linear 状态点 + 等宽数字) */
+.sx-strip { display: flex; gap: 0; flex-wrap: wrap;
+  background: rgba(11,17,32,.82); border: 1px solid rgba(148,163,184,.16);
+  border-radius: 14px; padding: 12px 6px; margin: 0 0 20px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+.sx-stat { flex: 1 1 120px; padding: 2px 16px; border-left: 1px solid rgba(148,163,184,.12); }
+.sx-stat:first-child { border-left: none; }
+.sx-stat-num { font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  font-size: 19px; font-weight: 700; color: #F2F6FC; }
+.sx-stat-label { font-size: 11.5px; color: #7D8DB0; letter-spacing: .06em; margin-top: 1px; }
+.sx-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 6px; vertical-align: 1px; }
+
+/* 账本链可视化 */
+.sx-chain { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-top: 12px; }
+.sx-block { width: 13px; height: 13px; border-radius: 4px;
+  background: linear-gradient(135deg, #6366F1, #2563EB);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.25); }
+.sx-block-mid { background: linear-gradient(135deg, #2563EB, #0891B2); }
+.sx-block-head { background: linear-gradient(135deg, #22D3EE, #34D399);
+  box-shadow: 0 0 10px rgba(34,211,238,.65), inset 0 1px 0 rgba(255,255,255,.3); }
+.sx-chain-note { font-size: 12px; color: #7D8DB0; margin-left: 8px; }
+
+/* 批量统计语义片 (Ant 式: 底色/边框/文字三件套) */
+.sx-batch-chip { display: inline-block; border-radius: 980px;
+  padding: 3px 12px; margin: 2px 6px 2px 0; font-size: 13px; font-weight: 600;
+  border: 1px solid; }
+
+/* 玺印 (标志性功能, 保留并加金环) */
 .sx-seal {
   flex: none; width: 96px; height: 96px; border-radius: 20px;
   display: flex; align-items: center; justify-content: center;
   background: radial-gradient(circle at 32% 28%, #DE4A3E, #C02B20 58%, #9E1F16);
   box-shadow: inset 0 0 0 3px rgba(255,241,230,.92),
-              inset 0 0 0 6px rgba(158,31,22,.5),
-              0 14px 34px rgba(192,43,32,.38);
+              inset 0 0 0 6px rgba(212,175,55,.40),
+              0 14px 34px rgba(192,43,32,.40);
   color: #FFF3E8; font-family: "Kaiti SC", "STKaiti", KaiTi, "楷体", serif;
   font-size: 29px; font-weight: 700; letter-spacing: .04em;
   writing-mode: vertical-rl; text-orientation: upright;
@@ -280,6 +323,20 @@ def registrations(ledger):
     return [e["payload"] for e in ledger.by_type("registration")]
 
 
+def status_strip(ledger):
+    """顶部状态条: 账本高度 / 已登记 / 验真回执 / 链状态 (全部真实数据)。"""
+    ok, _, _ = ledger.verify_chain()
+    dot = "#34D399" if ok else "#FB7185"
+    state = "全链可验" if ok else "链异常"
+    st.markdown(f"""
+    <div class="sx-strip">
+      <div class="sx-stat"><div class="sx-stat-num">{len(ledger.entries)}</div><div class="sx-stat-label">账本高度</div></div>
+      <div class="sx-stat"><div class="sx-stat-num">{len(ledger.by_type('registration'))}</div><div class="sx-stat-label">已登记凭证</div></div>
+      <div class="sx-stat"><div class="sx-stat-num">{len(ledger.by_type('receipt'))}</div><div class="sx-stat-label">验真回执</div></div>
+      <div class="sx-stat"><div class="sx-stat-num" style="font-size:15px;padding-top:3px"><span class="sx-dot" style="background:{dot}"></span>{state}</div><div class="sx-stat-label">链状态</div></div>
+    </div>""", unsafe_allow_html=True)
+
+
 def grade_hero(report, elapsed_ms=None):
     g = report.get("grade", "错误")
     color = GRADE_COLORS.get(g, "#FF3B30")
@@ -313,6 +370,7 @@ def page_register(ledger, packages, actors):
     st.markdown('<div class="sx-hero-title">登记</div>', unsafe_allow_html=True)
     st.markdown('<div class="sx-sub">为文件计算三层指纹并写入账本，领取防伪凭证。原件与字段明文不进账本。</div>',
                 unsafe_allow_html=True)
+    status_strip(ledger)
     up = st.file_uploader("选择要登记的文件", key="reg_up",
                           type=["pdf", "docx", "xlsx", "txt", "csv", "md",
                                 "png", "jpg", "jpeg"])
@@ -370,6 +428,7 @@ def page_verify(ledger, packages, actors):
     st.markdown('<div class="sx-hero-title">验真</div>', unsafe_allow_html=True)
     st.markdown('<div class="sx-sub">五步得出结论，每一步都可点开深挖底层证据。</div>',
                 unsafe_allow_html=True)
+    status_strip(ledger)
     regs = registrations(ledger)
     if not regs:
         st.markdown('<div class="sx-empty">尚无登记记录，验真无从谈起。<br>'
@@ -486,8 +545,13 @@ def page_verify(ledger, packages, actors):
     if ups and st.button("开始批量验真"):
         files = [(u.name, u.getvalue()) for u in ups]
         rows, stats, total = do_batch(ledger, packages, actors[VERIFIER_NAME], files)
-        chips = "　".join(f"{g} × {n}" for g, n in stats.items())
-        st.markdown(f"**{len(rows)} 份 · 总耗时 {total:.0f} ms**　{chips}")
+        st.markdown(f"**{len(rows)} 份 · 总耗时 {total:.0f} ms**")
+        chips = "".join(
+            f'<span class="sx-batch-chip" style="color:{c};background:{c}1A;'
+            f'border-color:{c}59">{g} × {n}</span>'
+            for g, n in stats.items()
+            for c in [GRADE_COLORS.get(g, "#94A3B8")])
+        st.markdown(chips, unsafe_allow_html=True)
         st.dataframe(rows, use_container_width=True, hide_index=True)
 
 
@@ -506,14 +570,31 @@ def page_ledger(ledger, packages, actors):
     head = ledger.head_hash()
     status_text = ('全链校验通过' if ok else
                    '链已断裂 @ ' + str(broken) + '：' + reason)
-    hint_html = ('<div class="sx-sec-sub" style="margin:8px 0 0">账本为空：'
+    hint_html = ('<div class="sx-sec-sub" style="margin:8px 0 0;padding-left:0">账本为空：'
                  '先登记一份文件，或在左侧一键载入演示数据。</div>'
                  if len(ledger.entries) == 0 else '')
+    n_entries = len(ledger.entries)
+    if n_entries:
+        shown = ledger.entries[:28]
+        squares = []
+        for i in range(len(shown)):
+            cls = "sx-block"
+            if i == len(shown) - 1:
+                cls += " sx-block-head"
+            elif i >= len(shown) // 2:
+                cls += " sx-block-mid"
+            squares.append(f'<span class="{cls}"></span>')
+        blocks_html = ('<div class="sx-chain">' + "".join(squares)
+                       + f'<span class="sx-chain-note">区块 × {n_entries}'
+                         ' · 最右为链头</span></div>')
+    else:
+        blocks_html = ''
     st.markdown(f"""
     <div class="sx-card">
       <div class="sx-label">账本状态</div>
       <div class="sx-ledger-head">{status_text}</div>
-      <div class="sx-mono" style="margin-top:6px">高度 {len(ledger.entries)} · 链头 {head}</div>
+      <div class="sx-mono" style="margin-top:6px">高度 {n_entries} · 链头 {head}</div>
+      {blocks_html}
       {hint_html}
     </div>""", unsafe_allow_html=True)
     if st.button("写入检查点（封印当前链头）"):
