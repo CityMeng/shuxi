@@ -84,7 +84,7 @@ html, body, [class*="css"], .stApp {
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.22); }
 #MainMenu, footer, [data-testid="stDecoration"] { visibility: hidden; }
-.block-container { max-width: 1152px; padding-top: 1.2rem; padding-bottom: 3.5rem; }
+.block-container { max-width: 1560px; padding: 3rem 3rem 3.5rem; }
 h1 { font-size: 28px !important; }
 h2 { font-size: 21px !important; }
 h3 { font-size: 16.5px !important; }
@@ -93,24 +93,45 @@ p, li, label, .stMarkdown { font-size: 15px; line-height: 1.55; }
 [data-testid="stCaptionContainer"] p { font-size: 13px !important; color: #94A3B8 !important; }
 hr { margin: 1.6rem 0 !important; border-color: rgba(255,255,255,.08) !important; }
 
-/* 侧栏 (其顶栏同色 #070C18) */
+/* 侧栏 (专业版: 加宽至 304px, 大字号导航, 玻璃状态卡,
+   独有点缀 = 靛蓝→青主线 + 一道朱砂红细线呼应玺印) */
 section[data-testid="stSidebar"] {
   background: linear-gradient(180deg, #070C18, #050811);
   border-right: 1px solid rgba(255,255,255,.08);
+  min-width: 304px; max-width: 304px;
 }
-.sx-brand { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #FFFFFF;
-  line-height: 1.5; padding-top: 4px; }
-.sx-brand-sub { font-size: 12.5px; color: #94A3B8; line-height: 1.5; margin: 2px 0 6px; }
-.sx-brand-bar { height: 3px; border-radius: 2px; margin: 9px 0 5px;
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] { padding-top: 1.8rem; }
+.sx-side-brand { display: flex; align-items: center; gap: 12px; padding: 2px 0 4px; }
+.sx-logo-lg { width: 44px; height: 44px; border-radius: 13px; }
+.sx-logo-lg .sx-logo-in { border-radius: 12px; font-size: 21px; }
+.sx-brand { font-size: 27px; font-weight: 800; letter-spacing: -0.02em; color: #FFFFFF;
+  line-height: 1.35; }
+.sx-brand-sub { font-size: 13px; color: #94A3B8; line-height: 1.55; margin-top: 1px; }
+.sx-brand-bar { height: 3px; border-radius: 2px; margin: 12px 0 6px; position: relative;
   background: linear-gradient(90deg, #4F46E5, #2563EB, #22D3EE); }
-div[data-testid="stRadio"] label { font-size: 14.5px; }
+.sx-brand-bar::after { content: ""; position: absolute; right: 0; top: 0;
+  width: 34px; height: 3px; border-radius: 2px; background: #E11D48; }
+div[data-testid="stRadio"] > label { font-size: 11.5px !important; font-weight: 700;
+  letter-spacing: .14em; color: #64748B !important; margin-bottom: 2px; }
+div[data-testid="stRadio"] label { font-size: 16.5px; font-weight: 600; color: #E2E8F0; }
+div[data-testid="stRadio"] > div { gap: 10px; }
+.sx-side-card {
+  background: linear-gradient(170deg, rgba(16,24,44,.85), rgba(9,14,28,.92));
+  border: 1px solid rgba(255,255,255,.08); border-radius: 14px;
+  padding: 13px 15px; margin: 4px 0 12px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+.sx-side-card .sx-sc-label { font-size: 11px; letter-spacing: .1em; color: #64748B;
+  font-weight: 700; margin-bottom: 5px; }
+.sx-side-card .sx-sc-value { font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  font-size: 15.5px; font-weight: 700; color: #FFFFFF; }
+.sx-side-foot { font-size: 12px; color: #64748B; line-height: 1.6; margin-top: 14px; }
 
-/* 顶栏 (移植其 Sticky Top Bar: 品牌区 + 协议片 + 状态片) */
+/* 顶栏: 透明融入页面 (用户定版: 不做实心块, 不遮挡), 仅一条发丝线分界 */
 .sx-topbar { display: flex; justify-content: space-between; align-items: center;
   gap: 16px; flex-wrap: wrap;
-  background: rgba(7,12,24,.88); border: 1px solid rgba(255,255,255,.08);
-  border-radius: 16px; padding: 10px 16px; margin-bottom: 16px;
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+  background: transparent; border: none;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  padding: 2px 2px 14px; margin-bottom: 18px; }
 .sx-top-left { display: flex; align-items: center; gap: 10px; }
 .sx-logo { width: 36px; height: 36px; border-radius: 11px; padding: 1px; flex: none;
   background: linear-gradient(135deg, #4F46E5, #2563EB, #22D3EE);
@@ -191,9 +212,9 @@ div[data-testid="stAlert"] { border-radius: 14px; font-size: 14.5px; }
 .sx-chip { display: inline-block; background: rgba(255,255,255,.04);
   border: 1px solid rgba(255,255,255,.08); border-radius: 8px;
   padding: 3px 10px; margin: 2px 4px 2px 0; font-size: 12.5px; color: #CBD5E1; }
-.sx-hero-title { font-size: 29px; font-weight: 800; letter-spacing: -0.02em;
+.sx-hero-title { font-size: 32px; font-weight: 800; letter-spacing: -0.02em;
   line-height: 1.65; padding: 10px 0 4px; margin: 0; color: #FFFFFF; }
-.sx-sub { color: #94A3B8; font-size: 14.5px; margin: 5px 0 18px; line-height: 1.55; }
+.sx-sub { color: #94A3B8; font-size: 15.5px; margin: 5px 0 18px; line-height: 1.55; }
 .sx-ledger-head { font-size: 19px; font-weight: 700; letter-spacing: -0.01em;
   color: #FFFFFF; line-height: 1.55; padding: 2px 0; }
 .sx-sec { font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
@@ -783,16 +804,31 @@ def page_ledger(ledger, packages, actors):
 # ---------------------------------------------------------------- 主入口
 
 def main():
-    st.set_page_config(page_title="数玺", page_icon="玺", layout="centered")
+    st.set_page_config(page_title="数玺", page_icon="玺", layout="wide")
     st.markdown(CSS, unsafe_allow_html=True)
     ledger, packages, actors = init_stores(DATA_DIR)
     with st.sidebar:
-        st.markdown('<div class="sx-brand">数玺</div>', unsafe_allow_html=True)
-        st.markdown('<div class="sx-brand-bar"></div>', unsafe_allow_html=True)
-        st.markdown('<div class="sx-brand-sub">数据可信管理工具 · 原型<br>'
-                    '规范 v1.3 · 套件 SXA1</div>', unsafe_allow_html=True)
+        st.markdown("""
+        <div class="sx-side-brand">
+          <div class="sx-logo sx-logo-lg"><div class="sx-logo-in">玺</div></div>
+          <div>
+            <div class="sx-brand">数玺</div>
+            <div class="sx-brand-sub">数据可信管理工具</div>
+          </div>
+        </div>
+        <div class="sx-brand-bar"></div>
+        <div class="sx-brand-sub">规范 v1.3 · 套件 SXA1 · 原型</div>""",
+                    unsafe_allow_html=True)
         page = st.radio("导航", ["登记", "验真", "授权与账本"])
-        st.divider()
+        ok_sb, _, _ = ledger.verify_chain()
+        dot_sb = "#34D399" if ok_sb else "#FB7185"
+        state_sb = "全链可验" if ok_sb else "链异常"
+        st.markdown(f"""
+        <div class="sx-side-card">
+          <div class="sx-sc-label">账本状态</div>
+          <div class="sx-sc-value"><span class="sx-dot" style="background:{dot_sb}"></span>{state_sb}</div>
+          <div class="sx-brand-sub" style="margin-top:4px">高度 {len(ledger.entries)} · 登记 {len(ledger.by_type('registration'))} · 回执 {len(ledger.by_type('receipt'))}</div>
+        </div>""", unsafe_allow_html=True)
         if st.button("一键载入演示数据"):
             try:
                 certs = seed_demo(ledger, packages, actors[REGISTRAR_NAME])
@@ -803,6 +839,9 @@ def main():
                 st.rerun()
         st.caption("演示主体：登记方「示例新能源有限公司 · 财务部」、"
                    "验真方「合作银行 · 核验岗」（均为虚构）")
+        st.markdown('<div class="sx-side-foot">三层指纹 · 四级验真<br>'
+                    '哈希存证 / 一键验真 / 授权留痕</div>',
+                    unsafe_allow_html=True)
     top_bar(ledger)
     status_strip(ledger)
     if page == "登记":
