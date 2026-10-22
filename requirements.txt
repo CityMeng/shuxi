@@ -1,0 +1,13 @@
+# 数玺系统依赖 (Python 3.11+; 版本为开发环境实测冻结值)
+cryptography==50.0.2
+ImageHash==4.3.2
+numpy==2.5.4
+onnxruntime==1.31.0
+openpyxl==3.1.5
+pillow==13.0.0
+pymupdf==2.0
+python-docx==1.2.0
+qrcode==8.2
+rapidocr-onnxruntime==1.4.4
+scipy==1.18.1
+streamlit==1.66.1
