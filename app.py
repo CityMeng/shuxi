@@ -9,7 +9,9 @@
 渐变配深绿字; 等级色全套玉石矿物色 (翡翠/青金/琥珀/朱砂/堇青);
 连中性色都带绿味 (鼠尾草灰绿); 链方块走玉阶梯、链头金块发光;
 「玺印」朱砂对翡翠。配色即产品故事: 玉玺为玉雕、印泥为朱砂。
-界面层于 2026-10-22 四度重做 (浅色 → 苹果深色 → 深链 → 玉玺)。
+界面层于 2026-10-22 四度重做 (浅色 → 苹果深色 → 深链 → 玉玺);
+同日晚对标 AI Studio 复刻版后吸收其三处长处: 半透明玻璃面 (透出
+底光)、玺印改玫红渐变 + 米白实环 + 金外环、状态点呼吸脉冲。
 
 数据目录: 环境变量 SHUXI_DATA_DIR, 缺省为项目下 data/。
 演示口令: 环境变量 SHUXI_DEMO_PASS, 缺省 shuxi-demo (原型演示用,
@@ -128,10 +130,11 @@ div[data-testid="stAlert"] { border-radius: 14px; font-size: 14.5px; }
 
 /* 面板 (Grafana 式: 独立标题行 + 发丝边 + 色阶分层) */
 .sx-card {
-  background: linear-gradient(168deg, #14231B, #0D1712 55%, #0B140F);
+  background: linear-gradient(168deg, rgba(20,35,27,.88), rgba(13,23,18,.85) 55%, rgba(11,20,15,.87));
   border: 1px solid rgba(163,190,175,.16);
   border-radius: 18px; padding: 22px 26px; margin: 12px 0;
   box-shadow: 0 18px 40px rgba(2,8,5,.55), inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
 .sx-card .sx-label {
   border-bottom: 1px solid rgba(163,190,175,.13);
@@ -176,16 +179,22 @@ div[data-testid="stAlert"] { border-radius: 14px; font-size: 14.5px; }
 
 /* 顶部状态条 */
 .sx-strip { display: flex; gap: 0; flex-wrap: wrap;
-  background: rgba(8,20,14,.85); border: 1px solid rgba(163,190,175,.15);
+  background: rgba(8,20,14,.78); border: 1px solid rgba(163,190,175,.15);
   border-radius: 14px; padding: 12px 6px; margin: 0 0 20px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 .sx-stat { flex: 1 1 120px; padding: 2px 16px; border-left: 1px solid rgba(163,190,175,.12); }
 .sx-stat:first-child { border-left: none; }
 .sx-stat-num { font-family: "SF Mono", ui-monospace, Menlo, monospace;
   font-size: 19px; font-weight: 700; color: #F4FAF5; }
 .sx-stat-label { font-size: 11.5px; color: #6E9180; letter-spacing: .06em; margin-top: 1px; }
 .sx-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-  margin-right: 6px; vertical-align: 1px; }
+  margin-right: 6px; vertical-align: 1px;
+  animation: sx-pulse 2.2s ease-in-out infinite; }
+@keyframes sx-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(62,207,142,.45); }
+  50% { box-shadow: 0 0 0 5px rgba(62,207,142,0); }
+}
 
 /* 账本链可视化 (玉阶梯, 链头金) */
 .sx-chain { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-top: 12px; }
@@ -206,10 +215,11 @@ div[data-testid="stAlert"] { border-radius: 14px; font-size: 14.5px; }
 .sx-seal {
   flex: none; width: 96px; height: 96px; border-radius: 20px;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 32% 28%, #DE4A3E, #C02B20 58%, #9E1F16);
-  box-shadow: inset 0 0 0 3px rgba(255,241,230,.92),
-              inset 0 0 0 6px rgba(212,175,55,.40),
-              0 14px 34px rgba(192,43,32,.40);
+  background: radial-gradient(circle at 38% 34%, #E5484D, #C81E2B 58%, #8F1D14);
+  border: 3px solid #FEF3C7;
+  box-shadow: 0 0 0 1.5px #D97706,
+              inset 0 0 0 2px rgba(254,243,199,.35),
+              0 14px 34px rgba(200,30,43,.42);
   color: #FFF3E8; font-family: "Kaiti SC", "STKaiti", KaiTi, "楷体", serif;
   font-size: 29px; font-weight: 700; letter-spacing: .04em;
   writing-mode: vertical-rl; text-orientation: upright;
@@ -217,7 +227,7 @@ div[data-testid="stAlert"] { border-radius: 14px; font-size: 14.5px; }
   animation: sx-stamp .45s cubic-bezier(.2,.9,.3,1.25) both;
 }
 .sx-seal-sm { width: 56px; height: 56px; border-radius: 13px;
-  font-size: 24px; writing-mode: horizontal-tb;
+  font-size: 24px; writing-mode: horizontal-tb; border-width: 2px;
   position: absolute; top: 18px; right: 20px; }
 @keyframes sx-stamp {
   0% { transform: scale(2.3) rotate(-26deg); opacity: 0; }
