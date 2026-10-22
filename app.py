@@ -538,9 +538,13 @@ def main():
         st.caption(f"账本高度 {len(ledger.entries)} · "
                    f"{'全链可验' if ok else '链异常'}")
         if st.button("一键载入演示数据"):
-            certs = seed_demo(ledger, packages, actors[REGISTRAR_NAME])
-            st.success(f"已载入 {len(certs)} 张演示凭证" if certs else "演示数据已存在")
-            st.rerun()
+            try:
+                certs = seed_demo(ledger, packages, actors[REGISTRAR_NAME])
+            except Exception as e:  # 环境异常不许把英文堆栈露给用户
+                st.error(f"演示数据载入失败：{e}。请把这条提示截图发给维护者。")
+            else:
+                st.success(f"已载入 {len(certs)} 张演示凭证" if certs else "演示数据已存在")
+                st.rerun()
         st.caption("演示主体：登记方「示例新能源有限公司 · 财务部」、"
                    "验真方「合作银行 · 核验岗」（均为虚构）")
     if page == "登记":

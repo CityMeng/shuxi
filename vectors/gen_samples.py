@@ -51,9 +51,34 @@ def _write(name: str, content):
         f.write(content)
 
 
+_FONT_CANDIDATES = (
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+    "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+    "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+    "/System/Library/Fonts/PingFang.ttc",
+    "/System/Library/Fonts/STHeiti Light.ttc",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+)
+
+
+def _load_font(size: int):
+    """按环境候选路径解析字体 (云端靠 packages.txt 的 fonts-noto-cjk 提供
+    第一条路径); 全落空时退回 PIL 内置字体, 绝不因字体缺失崩溃。"""
+    from PIL import ImageFont
+    for path in _FONT_CANDIDATES:
+        if os.path.exists(path):
+            try:
+                return ImageFont.truetype(path, size)
+            except OSError:
+                continue
+    return ImageFont.load_default()
+
+
 def _scans():
-    from PIL import Image, ImageDraw, ImageFont
-    font = ImageFont.truetype("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 30)
+    from PIL import Image, ImageDraw
+    font = _load_font(30)
     img = Image.new("RGB", (900, 620), "white")
     d = ImageDraw.Draw(img)
     lines = ["设备采购合同", "甲方：示例新能源有限公司", "乙方：衡州仪器设备有限公司",
