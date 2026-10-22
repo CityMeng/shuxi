@@ -3,9 +3,12 @@
 数玺 · 数据可信管理工具 (原型)
 三页: 登记 / 验真 / 授权与账本 — 实现《数玺协议规范 v1.3》。
 
-设计语言: Apple 风格 — 系统字体栈、#F5F5F7 浅灰底、白色大圆角卡片、
-#0071E3 强调蓝、胶囊按钮; 结论先行 (冰山演示), 证据一键深挖。
-界面层 (CSS + 空状态引导) 于 2026-10-22 按专业产品标准整体打磨。
+设计语言: 「曜石」Apple Pro 深色系 (依据 HIG 深色规范与 GitHub 上的
+苹果设计规范 DESIGN.md) — 纯黑底 #000 + 深灰玻璃面 #1C1C1E、文字
+#F5F5F7、深色专用强调蓝 #2997FF (#0071E3 在黑底对比度不足, 规范明示);
+卡片不用阴影分层, 全系统唯一的戏剧阴影给标志性元素「玺印」: 验真结论
+与登记凭证以朱红玺印封缄 (落印动画), 等级印于印面。
+界面层 (深色 CSS + 空状态引导 + 玺印) 于 2026-10-22 整体重做。
 
 数据目录: 环境变量 SHUXI_DATA_DIR, 缺省为项目下 data/。
 演示口令: 环境变量 SHUXI_DEMO_PASS, 缺省 shuxi-demo (原型演示用,
@@ -34,10 +37,16 @@ DEMO_PASS = os.environ.get("SHUXI_DEMO_PASS", "shuxi-demo")
 REGISTRAR_NAME = "示例新能源有限公司 · 财务部"
 VERIFIER_NAME = "合作银行 · 核验岗"
 
-GRADE_COLORS = {
-    "甲级": "#34C759", "乙级": "#0071E3", "丙级": "#FF9F0A",
-    "丁级": "#FF3B30", "丁级嫌疑": "#FF3B30", "待人工复核": "#8E8E93",
-    "已作废": "#636366", "未登记": "#8E8E93",
+GRADE_COLORS = {  # Apple 深色系统色 (HIG dark variants)
+    "甲级": "#30D158", "乙级": "#0A84FF", "丙级": "#FF9F0A",
+    "丁级": "#FF453A", "丁级嫌疑": "#FF453A", "待人工复核": "#98989F",
+    "已作废": "#98989F", "未登记": "#98989F",
+}
+
+SEAL_TEXT = {  # 玺印印面文字 (竖排两字)
+    "甲级": "甲级", "乙级": "乙级", "丙级": "丙级", "丁级": "丁级",
+    "丁级嫌疑": "丁级", "待人工复核": "复核", "已作废": "作废",
+    "未登记": "未登", "错误": "存疑",
 }
 
 CSS = """
@@ -45,82 +54,116 @@ CSS = """
 html, body, [class*="css"], .stApp {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
                "PingFang SC", "Microsoft YaHei", sans-serif !important;
-  color: #1D1D1F;
+  color: #F5F5F7;
   -webkit-font-smoothing: antialiased;
+}
+.stApp {
+  background-color: #000000;
+  background-image:
+    radial-gradient(1100px 520px at 50% -8%, rgba(41,151,255,.13), rgba(0,0,0,0) 60%),
+    radial-gradient(900px 500px at 88% 0%, rgba(162,89,255,.07), rgba(0,0,0,0) 55%);
+  background-attachment: fixed;
 }
 #MainMenu, footer, [data-testid="stDecoration"] { visibility: hidden; }
 .block-container { max-width: 920px; padding-top: 1.8rem; padding-bottom: 3.5rem; }
 h1 { font-size: 28px !important; }
 h2 { font-size: 21px !important; }
 h3 { font-size: 16.5px !important; }
-h1, h2, h3 { letter-spacing: -0.015em; font-weight: 700; color: #1D1D1F; }
+h1, h2, h3 { letter-spacing: -0.015em; font-weight: 700; color: #F5F5F7; }
 p, li, label, .stMarkdown { font-size: 15px; line-height: 1.55; }
-[data-testid="stCaptionContainer"] p { font-size: 13px !important; color: #6E6E73 !important; }
-hr { margin: 1.6rem 0 !important; border-color: rgba(0,0,0,.07) !important; }
+[data-testid="stCaptionContainer"] p { font-size: 13px !important; color: #86868B !important; }
+hr { margin: 1.6rem 0 !important; border-color: rgba(255,255,255,.09) !important; }
 
 /* 侧栏 */
 section[data-testid="stSidebar"] {
-  background: #ECECF0; border-right: 1px solid rgba(0,0,0,.05);
+  background: #101012; border-right: 1px solid rgba(255,255,255,.07);
 }
-section[data-testid="stSidebar"] .block-container { padding-top: 1.4rem; }
-.sx-brand { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
-.sx-brand-sub { font-size: 12.5px; color: #6E6E73; line-height: 1.5; margin: 2px 0 6px; }
+.sx-brand { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #F5F5F7; }
+.sx-brand-sub { font-size: 12.5px; color: #86868B; line-height: 1.5; margin: 2px 0 6px; }
+.sx-brand-bar { height: 3px; border-radius: 2px; margin: 9px 0 5px;
+  background: linear-gradient(90deg, #0090FF, #A259FF, #FF6482, #FF9F0A); }
 div[data-testid="stRadio"] label { font-size: 14.5px; }
 
 /* 控件 */
 .stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {
   border-radius: 980px; padding: 0.42rem 1.35rem; font-weight: 600;
-  font-size: 14.5px; border: 1px solid rgba(0,0,0,.08);
+  font-size: 14.5px; border: 1px solid rgba(255,255,255,.14);
   transition: all .18s ease;
 }
 .stButton > button:hover, .stDownloadButton > button:hover,
-.stFormSubmitButton > button:hover { opacity: .86; transform: translateY(-1px); }
+.stFormSubmitButton > button:hover { opacity: .88; transform: translateY(-1px); }
 div[data-testid="stExpander"] {
-  background: #FFFFFF; border: 1px solid rgba(0,0,0,.06);
-  border-radius: 16px; box-shadow: 0 2px 14px rgba(0,0,0,.04);
+  background: #161617; border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
 }
 div[data-testid="stExpander"] summary { font-size: 14.5px; font-weight: 600; }
 div[data-baseweb="select"] > div, div[data-testid="stFileUploader"] section {
   border-radius: 12px !important;
 }
 .stDataFrame { border-radius: 12px; overflow: hidden;
-  border: 1px solid rgba(0,0,0,.06); }
+  border: 1px solid rgba(255,255,255,.08); }
 div[data-testid="stAlert"] { border-radius: 14px; font-size: 14.5px; }
 
-/* 数玺组件 */
+/* 数玺组件 (曜石深色: 卡片不用阴影分层, 靠表面色差; 唯一的戏剧阴影给玺印) */
 .sx-card {
-  background: #FFFFFF; border: 1px solid rgba(0,0,0,.05);
+  background: linear-gradient(180deg, #1D1D20, #17171A);
+  border: 1px solid rgba(255,255,255,.08);
   border-radius: 18px; padding: 22px 26px; margin: 12px 0;
-  box-shadow: 0 4px 20px rgba(0,0,0,.045);
 }
+.sx-hero-card { display: flex; justify-content: space-between;
+  align-items: center; gap: 18px;
+  box-shadow: 0 24px 48px rgba(0,0,0,.5); }
 .sx-grade { font-size: 44px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
-.sx-conf { font-size: 15px; color: #6E6E73; margin-top: 2px; }
+.sx-conf { font-size: 15px; color: #86868B; margin-top: 2px; }
 .sx-cert-id { font-family: "SF Mono", ui-monospace, Menlo, monospace;
-  font-size: 25px; font-weight: 700; letter-spacing: .02em; }
+  font-size: 25px; font-weight: 700; letter-spacing: .02em; color: #F5F5F7; }
 .sx-mono { font-family: "SF Mono", ui-monospace, Menlo, monospace;
-  font-size: 12px; line-height: 1.6; word-break: break-all; color: #48484A; }
+  font-size: 12px; line-height: 1.6; word-break: break-all; color: #AEAEB2; }
 .sx-label { font-size: 11.5px; font-weight: 600; color: #86868B;
   letter-spacing: .07em; margin-bottom: 3px; }
-.sx-chip { display: inline-block; background: #F5F5F7; border: 1px solid rgba(0,0,0,.04);
-  border-radius: 980px; padding: 3px 11px; margin: 2px 4px 2px 0;
-  font-size: 12.5px; color: #1D1D1F; }
+.sx-chip { display: inline-block; background: #2C2C2E;
+  border: 1px solid rgba(255,255,255,.06); border-radius: 980px;
+  padding: 3px 11px; margin: 2px 4px 2px 0; font-size: 12.5px; color: #F5F5F7; }
 .sx-hero-title { font-size: 29px; font-weight: 800; letter-spacing: -0.02em;
-  line-height: 1.45; padding: 4px 0 2px; margin: 0; }
-.sx-sub { color: #6E6E73; font-size: 14.5px; margin: 5px 0 18px; line-height: 1.55; }
-.sx-ledger-head { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+  line-height: 1.45; padding: 4px 0 2px; margin: 0; color: #F5F5F7; }
+.sx-sub { color: #86868B; font-size: 14.5px; margin: 5px 0 18px; line-height: 1.55; }
+.sx-ledger-head { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; color: #F5F5F7; }
 .sx-sec { font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
-  margin: 30px 0 4px; }
-.sx-sec-sub { font-size: 13.5px; color: #6E6E73; margin-bottom: 10px; }
+  margin: 30px 0 4px; color: #F5F5F7; }
+.sx-sec-sub { font-size: 13.5px; color: #86868B; margin-bottom: 10px; }
 .sx-empty {
-  background: rgba(255,255,255,.65); border: 1.5px dashed rgba(0,0,0,.13);
+  background: rgba(255,255,255,.03); border: 1.5px dashed rgba(255,255,255,.18);
   border-radius: 16px; padding: 22px 24px; margin: 10px 0 6px;
-  color: #6E6E73; font-size: 14px; line-height: 1.65; text-align: center;
+  color: #98989F; font-size: 14px; line-height: 1.65; text-align: center;
 }
-.sx-reasons { background: #FFFFFF; border: 1px solid rgba(0,0,0,.05);
-  border-radius: 16px; padding: 14px 22px; margin: 4px 0 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,.04); }
+.sx-reasons { background: #1C1C1E; border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px; padding: 14px 22px; margin: 4px 0 12px; }
 .sx-reasons ul { margin: 0; padding-left: 20px; }
-.sx-reasons li { font-size: 14.5px; line-height: 1.6; margin: 3px 0; }
+.sx-reasons li { font-size: 14.5px; line-height: 1.6; margin: 3px 0; color: #F5F5F7; }
+
+/* 标志性功能: 玺印 — 结论与凭证以印封缄, 落印动画 */
+.sx-seal {
+  flex: none; width: 96px; height: 96px; border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 32% 28%, #DE4A3E, #C02B20 58%, #9E1F16);
+  box-shadow: inset 0 0 0 3px rgba(255,241,230,.92),
+              inset 0 0 0 6px rgba(158,31,22,.5),
+              0 14px 34px rgba(192,43,32,.38);
+  color: #FFF3E8; font-family: "Kaiti SC", "STKaiti", KaiTi, "楷体", serif;
+  font-size: 29px; font-weight: 700; letter-spacing: .04em;
+  writing-mode: vertical-rl; text-orientation: upright;
+  transform: rotate(-7deg);
+  animation: sx-stamp .45s cubic-bezier(.2,.9,.3,1.25) both;
+}
+.sx-seal-sm { width: 56px; height: 56px; border-radius: 13px;
+  font-size: 24px; writing-mode: horizontal-tb;
+  position: absolute; top: 18px; right: 20px; }
+@keyframes sx-stamp {
+  0% { transform: scale(2.3) rotate(-26deg); opacity: 0; }
+  55% { transform: scale(.93) rotate(-4deg); opacity: 1; }
+  78% { transform: scale(1.05) rotate(-8.5deg); }
+  100% { transform: scale(1) rotate(-7deg); opacity: 1; }
+}
 </style>
 """
 
@@ -247,10 +290,13 @@ def grade_hero(report, elapsed_ms=None):
         conf_pct = conf
     extra = f" · 本次验真耗时 {elapsed_ms:.0f} ms" if elapsed_ms is not None else ""
     st.markdown(f"""
-    <div class="sx-card">
-      <div class="sx-label">验真结论</div>
-      <div class="sx-grade" style="color:{color}">{g}</div>
-      <div class="sx-conf">把握 {conf_pct}{extra}</div>
+    <div class="sx-card sx-hero-card">
+      <div>
+        <div class="sx-label">验真结论</div>
+        <div class="sx-grade" style="color:{color}">{g}</div>
+        <div class="sx-conf">把握 {conf_pct}{extra}</div>
+      </div>
+      <div class="sx-seal">{SEAL_TEXT.get(g, g[:2])}</div>
     </div>""", unsafe_allow_html=True)
     if report.get("error"):
         st.error(report["error"])
@@ -290,7 +336,8 @@ def page_register(ledger, packages, actors):
             col1, col2 = st.columns([3, 1])
             with col1:
                 st.markdown(f"""
-                <div class="sx-card">
+                <div class="sx-card" style="position:relative">
+                  <div class="sx-seal sx-seal-sm">玺</div>
                   <div class="sx-label">数玺凭证 · 登记成功</div>
                   <div class="sx-cert-id">{cert}</div>
                   <div style="margin:10px 0 4px">{p['filename']} · 登记主体 {p['registrar']}</div>
@@ -543,6 +590,7 @@ def main():
     ledger, packages, actors = init_stores(DATA_DIR)
     with st.sidebar:
         st.markdown('<div class="sx-brand">数玺</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sx-brand-bar"></div>', unsafe_allow_html=True)
         st.markdown('<div class="sx-brand-sub">数据可信管理工具 · 原型<br>'
                     '规范 v1.3 · 套件 SXA1</div>', unsafe_allow_html=True)
         page = st.radio("导航", ["登记", "验真", "授权与账本"])
