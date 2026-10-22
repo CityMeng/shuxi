@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 数玺 · 数据可信管理工具 (原型)
-三页: 登记 / 验真 / 授权与账本 — 实现《数玺协议规范 v1.2》。
+三页: 登记 / 验真 / 授权与账本 — 实现《数玺协议规范 v1.3》。
 
 设计语言: Apple 风格 — 系统字体栈、#F5F5F7 浅灰底、白色大圆角卡片、
 #0071E3 强调蓝、胶囊按钮; 结论先行 (冰山演示), 证据一键深挖。
+界面层 (CSS + 空状态引导) 于 2026-10-22 按专业产品标准整体打磨。
 
 数据目录: 环境变量 SHUXI_DATA_DIR, 缺省为项目下 data/。
 演示口令: 环境变量 SHUXI_DEMO_PASS, 缺省 shuxi-demo (原型演示用,
@@ -45,37 +46,80 @@ html, body, [class*="css"], .stApp {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
                "PingFang SC", "Microsoft YaHei", sans-serif !important;
   color: #1D1D1F;
+  -webkit-font-smoothing: antialiased;
 }
 #MainMenu, footer, [data-testid="stDecoration"] { visibility: hidden; }
-.block-container { max-width: 980px; padding-top: 2.2rem; }
-h1, h2, h3 { letter-spacing: -0.02em; font-weight: 700; }
-.stButton > button {
-  border-radius: 980px; padding: 0.45rem 1.4rem; font-weight: 600;
-  border: none; transition: all .18s ease;
+.block-container { max-width: 920px; padding-top: 1.8rem; padding-bottom: 3.5rem; }
+h1 { font-size: 28px !important; }
+h2 { font-size: 21px !important; }
+h3 { font-size: 16.5px !important; }
+h1, h2, h3 { letter-spacing: -0.015em; font-weight: 700; color: #1D1D1F; }
+p, li, label, .stMarkdown { font-size: 15px; line-height: 1.55; }
+[data-testid="stCaptionContainer"] p { font-size: 13px !important; color: #6E6E73 !important; }
+hr { margin: 1.6rem 0 !important; border-color: rgba(0,0,0,.07) !important; }
+
+/* 侧栏 */
+section[data-testid="stSidebar"] {
+  background: #ECECF0; border-right: 1px solid rgba(0,0,0,.05);
 }
-.stButton > button:hover { opacity: .85; transform: translateY(-1px); }
+section[data-testid="stSidebar"] .block-container { padding-top: 1.4rem; }
+.sx-brand { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+.sx-brand-sub { font-size: 12.5px; color: #6E6E73; line-height: 1.5; margin: 2px 0 6px; }
+div[data-testid="stRadio"] label { font-size: 14.5px; }
+
+/* 控件 */
+.stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {
+  border-radius: 980px; padding: 0.42rem 1.35rem; font-weight: 600;
+  font-size: 14.5px; border: 1px solid rgba(0,0,0,.08);
+  transition: all .18s ease;
+}
+.stButton > button:hover, .stDownloadButton > button:hover,
+.stFormSubmitButton > button:hover { opacity: .86; transform: translateY(-1px); }
 div[data-testid="stExpander"] {
   background: #FFFFFF; border: 1px solid rgba(0,0,0,.06);
-  border-radius: 18px; box-shadow: 0 4px 24px rgba(0,0,0,.05);
+  border-radius: 16px; box-shadow: 0 2px 14px rgba(0,0,0,.04);
 }
+div[data-testid="stExpander"] summary { font-size: 14.5px; font-weight: 600; }
+div[data-baseweb="select"] > div, div[data-testid="stFileUploader"] section {
+  border-radius: 12px !important;
+}
+.stDataFrame { border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(0,0,0,.06); }
+div[data-testid="stAlert"] { border-radius: 14px; font-size: 14.5px; }
+
+/* 数玺组件 */
 .sx-card {
-  background: #FFFFFF; border: 1px solid rgba(0,0,0,.06);
-  border-radius: 20px; padding: 26px 30px; margin: 14px 0;
-  box-shadow: 0 8px 32px rgba(0,0,0,.06);
+  background: #FFFFFF; border: 1px solid rgba(0,0,0,.05);
+  border-radius: 18px; padding: 22px 26px; margin: 12px 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,.045);
 }
-.sx-grade { font-size: 56px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; }
-.sx-conf { font-size: 17px; color: #6E6E73; }
+.sx-grade { font-size: 44px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+.sx-conf { font-size: 15px; color: #6E6E73; margin-top: 2px; }
 .sx-cert-id { font-family: "SF Mono", ui-monospace, Menlo, monospace;
-  font-size: 30px; font-weight: 700; letter-spacing: .02em; }
+  font-size: 25px; font-weight: 700; letter-spacing: .02em; }
 .sx-mono { font-family: "SF Mono", ui-monospace, Menlo, monospace;
-  font-size: 12.5px; word-break: break-all; color: #3A3A3C; }
-.sx-label { font-size: 12px; color: #86868B; text-transform: uppercase;
-  letter-spacing: .08em; margin-bottom: 2px; }
-.sx-chip { display: inline-block; background: #F5F5F7; border-radius: 980px;
-  padding: 3px 12px; margin: 2px 4px 2px 0; font-size: 13px; color: #1D1D1F; }
-.sx-hero-title { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; }
-.sx-sub { color: #6E6E73; font-size: 16px; margin-top: -6px; }
-.stDataFrame { border-radius: 14px; overflow: hidden; }
+  font-size: 12px; line-height: 1.6; word-break: break-all; color: #48484A; }
+.sx-label { font-size: 11.5px; font-weight: 600; color: #86868B;
+  letter-spacing: .07em; margin-bottom: 3px; }
+.sx-chip { display: inline-block; background: #F5F5F7; border: 1px solid rgba(0,0,0,.04);
+  border-radius: 980px; padding: 3px 11px; margin: 2px 4px 2px 0;
+  font-size: 12.5px; color: #1D1D1F; }
+.sx-hero-title { font-size: 29px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
+.sx-sub { color: #6E6E73; font-size: 14.5px; margin: 5px 0 18px; line-height: 1.55; }
+.sx-ledger-head { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+.sx-sec { font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
+  margin: 30px 0 4px; }
+.sx-sec-sub { font-size: 13.5px; color: #6E6E73; margin-bottom: 10px; }
+.sx-empty {
+  background: rgba(255,255,255,.65); border: 1.5px dashed rgba(0,0,0,.13);
+  border-radius: 16px; padding: 22px 24px; margin: 10px 0 6px;
+  color: #6E6E73; font-size: 14px; line-height: 1.65; text-align: center;
+}
+.sx-reasons { background: #FFFFFF; border: 1px solid rgba(0,0,0,.05);
+  border-radius: 16px; padding: 14px 22px 14px 8px; margin: 4px 0 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.04); }
+.sx-reasons ul { margin: 0; }
+.sx-reasons li { font-size: 14.5px; line-height: 1.6; margin: 3px 0; }
 </style>
 """
 
@@ -207,10 +251,13 @@ def grade_hero(report, elapsed_ms=None):
       <div class="sx-grade" style="color:{color}">{g}</div>
       <div class="sx-conf">把握 {conf_pct}{extra}</div>
     </div>""", unsafe_allow_html=True)
-    for r in report.get("reasons", []):
-        st.markdown(f"- {r}")
     if report.get("error"):
         st.error(report["error"])
+    reasons = report.get("reasons", [])
+    if reasons:
+        items = "".join(f"<li>{r}</li>" for r in reasons)
+        st.markdown(f'<div class="sx-reasons"><ul>{items}</ul></div>',
+                    unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------- 页面: 登记
@@ -269,7 +316,9 @@ def page_verify(ledger, packages, actors):
                 unsafe_allow_html=True)
     regs = registrations(ledger)
     if not regs:
-        st.info("尚无登记记录。先到「登记」页登记一份文件，或在左侧一键载入演示数据。")
+        st.markdown('<div class="sx-empty">尚无登记记录，验真无从谈起。<br>'
+                    '先到「登记」页登记一份文件，或点左侧「一键载入演示数据」。'
+                    '</div>', unsafe_allow_html=True)
         return
     labels = {f"{p['cert_id']} · {p['filename']}": p["cert_id"] for p in regs}
     cert = labels[st.selectbox("选择凭证", list(labels))]
@@ -370,9 +419,9 @@ def page_verify(ledger, packages, actors):
                         else:
                             st.error("复核不通过：报告与账本不一致。")
 
-    st.divider()
-    st.markdown("### 批量验真")
-    st.caption("一次上传多份文件：按文件名自动匹配凭证，五十份也是一张表。")
+    st.markdown('<div class="sx-sec">批量验真</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sx-sec-sub">一次上传多份文件：按文件名自动匹配凭证，五十份也是一张表。</div>',
+                unsafe_allow_html=True)
     ups = st.file_uploader("批量上传", key="batch_up", accept_multiple_files=True)
     if ups and st.button("开始批量验真"):
         files = [(u.name, u.getvalue()) for u in ups]
@@ -395,11 +444,17 @@ def page_ledger(ledger, packages, actors):
                 unsafe_allow_html=True)
     ok, broken, reason = ledger.verify_chain()
     head = ledger.head_hash()
+    status_text = ('全链校验通过' if ok else
+                   '链已断裂 @ ' + str(broken) + '：' + reason)
+    hint_html = ('<div class="sx-sec-sub" style="margin:8px 0 0">账本为空：'
+                 '先登记一份文件，或在左侧一键载入演示数据。</div>'
+                 if len(ledger.entries) == 0 else '')
     st.markdown(f"""
     <div class="sx-card">
       <div class="sx-label">账本状态</div>
-      <div style="font-size:22px;font-weight:700">{'全链校验通过' if ok else '链已断裂 @ ' + str(broken) + '：' + reason}</div>
+      <div class="sx-ledger-head">{status_text}</div>
       <div class="sx-mono" style="margin-top:6px">高度 {len(ledger.entries)} · 链头 {head}</div>
+      {hint_html}
     </div>""", unsafe_allow_html=True)
     if st.button("写入检查点（封印当前链头）"):
         svc.checkpoint(ledger, actors[REGISTRAR_NAME])
@@ -408,7 +463,9 @@ def page_ledger(ledger, packages, actors):
 
     regs = registrations(ledger)
     labels = {f"{p['cert_id']} · {p['filename']}": p["cert_id"] for p in regs}
-    st.markdown("### 新建授权")
+    st.markdown('<div class="sx-sec">新建授权</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sx-sec-sub">把指定凭证的查验权授予验真方，限期、限次、全程留痕。</div>',
+                unsafe_allow_html=True)
     if labels:
         with st.form("auth_form"):
             cert = labels[st.selectbox("凭证", list(labels))]
@@ -422,6 +479,10 @@ def page_ledger(ledger, packages, actors):
                     actors[VERIFIER_NAME].fingerprint, int(days), int(maxc))
                 st.success(f"授权已入账：{au}")
                 st.rerun()
+    else:
+        st.markdown('<div class="sx-empty">暂无可授权的凭证。<br>'
+                    '先到「登记」页登记一份文件，或在左侧一键载入演示数据。</div>',
+                    unsafe_allow_html=True)
     auths = ledger.by_type("authorization")
     if auths:
         rows = []
@@ -435,16 +496,18 @@ def page_ledger(ledger, packages, actors):
         st.dataframe(rows, use_container_width=True, hide_index=True)
 
     receipts = ledger.by_type("receipt")
-    st.markdown("### 验真回执")
+    st.markdown('<div class="sx-sec">验真回执</div>', unsafe_allow_html=True)
     if receipts:
         rows = [{"回执": e["payload"]["receipt_id"], "凭证": e["payload"]["cert_id"],
                  "验真方": e["payload"]["verifier"], "结论": e["payload"]["grade"],
                  "时间": e["ts"]} for e in receipts]
         st.dataframe(rows, use_container_width=True, hide_index=True)
     else:
-        st.caption("暂无回执。")
+        st.markdown('<div class="sx-empty">暂无回执。<br>'
+                    '在「验真」页完成一次验真后，回执会自动入账到这里。</div>',
+                    unsafe_allow_html=True)
 
-    st.markdown("### 作废与密钥公告")
+    st.markdown('<div class="sx-sec">作废与密钥公告</div>', unsafe_allow_html=True)
     if labels:
         cert = labels[st.selectbox("选择凭证", list(labels), key="revoke_cert")]
         state = svc.resolve_status(ledger, cert)
@@ -454,6 +517,9 @@ def page_ledger(ledger, packages, actors):
             svc.revoke(ledger, actors[REGISTRAR_NAME], cert)
             st.success("已作废并入账。")
             st.rerun()
+    else:
+        st.markdown('<div class="sx-empty">暂无可作废的凭证。</div>',
+                    unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------- 主入口
@@ -463,8 +529,9 @@ def main():
     st.markdown(CSS, unsafe_allow_html=True)
     ledger, packages, actors = init_stores(DATA_DIR)
     with st.sidebar:
-        st.markdown("## 数玺")
-        st.caption("数据可信管理工具 · 原型\n规范 v1.2 · 套件 SXA1")
+        st.markdown('<div class="sx-brand">数玺</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sx-brand-sub">数据可信管理工具 · 原型<br>'
+                    '规范 v1.3 · 套件 SXA1</div>', unsafe_allow_html=True)
         page = st.radio("导航", ["登记", "验真", "授权与账本"])
         st.divider()
         ok, _, _ = ledger.verify_chain()
