@@ -85,6 +85,23 @@ def main():
     check("AppTest 侧栏载入已写入 3 张凭证",
           len(led.by_type("registration")) == 3)
 
+    # 演示重置: 两次点击 (二次确认防误触) 后回到恰好 3 张演示凭证
+    reset_btn = [b for b in at.sidebar.button if b.label == "重置演示数据"]
+    check("AppTest 侧栏有重置按钮", len(reset_btn) == 1)
+    if reset_btn:
+        reset_btn[0].click().run()
+        armed = [b for b in at.sidebar.button if "确认重置" in b.label]
+        check("AppTest 重置需二次确认", len(armed) == 1 and not at.exception)
+        if armed:
+            armed[0].click().run()
+            led2 = Ledger(os.path.join(os.environ["SHUXI_DATA_DIR"],
+                                       "ledger.jsonl"))
+            okc, _, _ = led2.verify_chain()
+            check("AppTest 重置后恰好 3 张演示凭证且全链可验",
+                  len(led2.entries) == 3
+                  and len(led2.by_type("registration")) == 3 and okc
+                  and not at.exception)
+
     print(f"\n==== 1c 测试: {sum(R)}/{len(R)} PASS ====")
     return 0 if all(R) else 1
 

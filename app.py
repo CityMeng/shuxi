@@ -387,6 +387,23 @@ def init_stores(data_dir: str):
     return ledger, packages, actors
 
 
+def wipe_data_dir(data_dir: str):
+    """演示重置: 清空数据目录内的账本/登记包/主体密钥, 目录本身保留。
+    只动该目录第一层, 并拒绝可疑路径 (根目录/用户主目录)。"""
+    ap = os.path.abspath(data_dir)
+    if ap in ("/", os.path.expanduser("~")) or len(ap) < 4:
+        raise ValueError(f"拒绝清空可疑路径: {ap}")
+    if not os.path.isdir(ap):
+        return
+    import shutil
+    for name in os.listdir(ap):
+        p = os.path.join(ap, name)
+        if os.path.isdir(p) and not os.path.islink(p):
+            shutil.rmtree(p)
+        else:
+            os.remove(p)
+
+
 def ext_of(filename: str) -> str:
     return filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 
@@ -900,6 +917,15 @@ def main():
     st.set_page_config(page_title="数玺", page_icon="玺", layout="wide")
     st.markdown(CSS, unsafe_allow_html=True)
     ledger, packages, actors = init_stores(DATA_DIR)
+    if st.session_state.pop("do_seed_after_reset", False):
+        # 演示重置后半程: 账本刚清空重建, 在此补齐演示三件套并给出提示
+        try:
+            _certs = seed_demo(ledger, packages, actors[REGISTRAR_NAME])
+            st.session_state["seed_flash"] = (
+                "success", f"演示已重置：账本清空，{len(_certs)} 张演示凭证已重新载入")
+        except Exception as e:
+            st.session_state["seed_flash"] = (
+                "error", f"账本已清空，但演示数据重载失败：{e}。请点一键载入演示数据重试。")
     with st.sidebar:
         st.markdown("""
         <div class="sx-side-brand">
@@ -940,6 +966,23 @@ def main():
         _flash = st.session_state.pop("seed_flash", None)
         if _flash:
             (st.success if _flash[0] == "success" else st.error)(_flash[1])
+        _armed = st.session_state.get("reset_armed", False)
+        if st.button("确认重置（清空账本）" if _armed else "重置演示数据"):
+            if not _armed:
+                st.session_state["reset_armed"] = True
+            else:
+                st.session_state["reset_armed"] = False
+                try:
+                    wipe_data_dir(DATA_DIR)
+                except Exception as e:
+                    st.session_state["seed_flash"] = ("error", f"重置失败：{e}")
+                else:
+                    st.session_state.clear()
+                    st.session_state["do_seed_after_reset"] = True
+            st.rerun()
+        if _armed:
+            st.warning("将清空当前账本的全部记录（登记、验真回执、授权、检查点），"
+                       "回到初始演示状态。再点一次按钮确认重置。")
         st.markdown("""
         <div class="sx-side-card">
           <div class="sx-sc-label">演示说明</div>
