@@ -433,15 +433,27 @@ def do_batch(ledger, packages, verifier_kp, files):
     return rows, stats, (time.perf_counter() - t0) * 1000
 
 
+DEMO_FILES = ("report.txt", "contract_bad.txt", "scan_a.png")
+
+
 def seed_demo(ledger, packages, registrar_kp):
-    """一键载入演示数据 (虚构样本): 已登记过则跳过。"""
-    if ledger.by_type("registration"):
-        return []
+    """一键载入演示数据 (虚构样本): 逐份核对演示三件套, 缺哪份补哪份;
+    演示凭证被作废也算缺失, 重新登记一份, 保证演示随时能跑。
+    (旧逻辑是账本里有任何登记就整体跳过, 公共实例上按钮会失效。)"""
     import gen_samples
     gen_samples.main()
     sdir = os.path.join(BASE_DIR, "vectors", "samples")
+    have = set()
+    for e in ledger.by_type("registration"):
+        p = e["payload"]
+        if p.get("registrar") != REGISTRAR_NAME:
+            continue
+        if svc.resolve_status(ledger, p["cert_id"])["status"] == "有效":
+            have.add(p["filename"])
     certs = []
-    for name in ("report.txt", "contract_bad.txt", "scan_a.png"):
+    for name in DEMO_FILES:
+        if name in have:
+            continue
         with open(os.path.join(sdir, name), "rb") as f:
             certs.append(do_register(ledger, packages, registrar_kp, name, f.read()))
     return certs
@@ -910,7 +922,8 @@ def main():
             except Exception as e:  # 环境异常不许把英文堆栈露给用户
                 st.error(f"演示数据载入失败：{e}。请把这条提示截图发给维护者。")
             else:
-                st.success(f"已载入 {len(certs)} 张演示凭证" if certs else "演示数据已存在")
+                st.success(f"已补齐演示数据：新增 {len(certs)} 张演示凭证" if certs
+                           else "演示数据已齐全（3 张演示凭证都在，可直接去验真页试）")
                 st.rerun()
         st.markdown("""
         <div class="sx-side-card">
