@@ -1,0 +1,147 @@
+{
+ "spec_version": "1.3",
+ "suite": "SXA1",
+ "vectors": [
+  {
+   "id": "V-report.txt",
+   "file": "report.txt",
+   "sha256": "f10272645d4e80c1c089bc2c2922e68c4eff4d9e7e8e827f9ba447a4bd7edef8",
+   "exact": {
+    "sha256_root": "2bfbe6daf3a6945557c2557c86e74d565bb6fb9c7331828e1be509ac3ae3cd29",
+    "sm3_root": "97f270898a42872ccc8b614dffa046bbe3cb30ae4a212cf3a910d20c60f15205",
+    "chunk_count": 1,
+    "size": 250
+   },
+   "semantic_root": "251f705faeec5cbcc1088600e482887d635eed2dc70afd7355169b32bfc6444a",
+   "field_count": 9
+  },
+  {
+   "id": "V-report_tampered.txt",
+   "file": "report_tampered.txt",
+   "sha256": "05de05022a4845b769cc53360ac3c2f7f3df8fe81490502bedc47cf0f2d05656",
+   "exact": {
+    "sha256_root": "5abfacb8bec04f018b2ec835cb28c89ba325e5a0503dd1c262acc0507b3ab932",
+    "sm3_root": "79ea0c6c9ebc8c1af161330954d6a1cd738a1848d8f7d98c84db093009e3cb6f",
+    "chunk_count": 1,
+    "size": 250
+   },
+   "semantic_root": "eaf2c36efdbbd5d4e3e3dd3dffc2f203c8adc33bce7375a7aa666d001bfe8b39",
+   "field_count": 9
+  },
+  {
+   "id": "V-report_converted.txt",
+   "file": "report_converted.txt",
+   "sha256": "f6aa8b1a784e256d2cfd8c7cba6f9d95c9e70cb6083bcd6aa3d5800a5dd3582f",
+   "exact": {
+    "sha256_root": "67bcb2ad412631c1f51e8921aae26d19b7e011fc2f38b740b1ccc96f5e374ccc",
+    "sm3_root": "cbcf7b7d1ab08fc1b671b3c60d2b1a1096797ff95054c62e43f000362864e0d4",
+    "chunk_count": 1,
+    "size": 278
+   },
+   "semantic_root": "251f705faeec5cbcc1088600e482887d635eed2dc70afd7355169b32bfc6444a",
+   "field_count": 9
+  },
+  {
+   "id": "V-fake.txt",
+   "file": "fake.txt",
+   "sha256": "c2c5c4e07b17bc1705df1a098b4eeae4da38a427855cb9090233d54e451c9759",
+   "exact": {
+    "sha256_root": "24fa569f5c32e3360400616d009f127e74e3892b7781d5174ecc96fdb74dab25",
+    "sm3_root": "80ed659b8e1013bb23706348c507bfbd600cd07fe458d11e162ef9731eedd7f8",
+    "chunk_count": 1,
+    "size": 253
+   },
+   "semantic_root": "8ba8d7a52fb16ea38bfda11a33a88fdf831a54ceed5eab44f92d249ff9afa3dd",
+   "field_count": 9
+  },
+  {
+   "id": "V-contract_bad.txt",
+   "file": "contract_bad.txt",
+   "sha256": "9c55b56a1f9e0920bb88678f32b845e724fc92f1be62b8ef64584a60149a783a",
+   "exact": {
+    "sha256_root": "162909ba3899ae2842225deaa1c737f74178a8e75e4d7614a385824545847ea9",
+    "sm3_root": "c7fd054e09aed5eab2c11a902cafea2499d26173ba50be50ae1ed29ac5a190a9",
+    "chunk_count": 1,
+    "size": 193
+   },
+   "semantic_root": "f35e92d7e969607da4a2fab32da7bb2fd6027f8a117331c8792a7b106c077497",
+   "field_count": 4
+  },
+  {
+   "id": "V-big.bin",
+   "file": "big.bin",
+   "sha256": "0dd55df917d2c13d7f2cb599994aaa714816ec1142b4484e934faae1827217ac",
+   "exact": {
+    "sha256_root": "61c12624322c24298869184abe9346df64ddff15b201f13c9652e652520e0375",
+    "sm3_root": "1ca022efb9a21311a8206ef3031f2e219f849a870ad5f43b045b8a64737d3461",
+    "chunk_count": 3,
+    "size": 599818
+   },
+   "semantic_root": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+   "field_count": 0
+  },
+  {
+   "id": "V-scan_a.png",
+   "file": "scan_a.png",
+   "sha256": "8dec2b8b3d5e087fbbf9968ba064c6b6b43df6043bab7a7166221a7f5d9218dc",
+   "exact": {
+    "sha256_root": "902c7f4ffdd60adda1c9a271385cc74146f5eb29c1e802f36788219bcdca04cc",
+    "sm3_root": "32ee08b6d23f7beb3a86cc06a6b18d9148d5d8a218bf0db5738bbbff8410766a",
+    "chunk_count": 1,
+    "size": 37715
+   },
+   "semantic_root": "2681204a8ad7e2c91677e2a535d9e3c1236ff763e28600339a5a5c5adfa5598c",
+   "field_count": 4
+  }
+ ],
+ "grade_cases": [
+  {
+   "id": "G1-exact",
+   "reg": "report.txt",
+   "cand": "report.txt",
+   "expect": "甲级",
+   "expect_conf": 0.99
+  },
+  {
+   "id": "G2-tamper",
+   "reg": "report.txt",
+   "cand": "report_tampered.txt",
+   "expect": "丁级",
+   "expect_conf": 0.95,
+   "expect_diff_field": "净利润"
+  },
+  {
+   "id": "G3-convert",
+   "reg": "report.txt",
+   "cand": "report_converted.txt",
+   "expect": "乙级",
+   "expect_conf": 0.9
+  },
+  {
+   "id": "G4-fake-standalone",
+   "reg": null,
+   "cand": "fake.txt",
+   "expect": "丙级",
+   "expect_conf": 0.85
+  },
+  {
+   "id": "G5-scan",
+   "reg": "scan_a.png",
+   "cand": "scan_b.jpg",
+   "expect": "乙级",
+   "expect_conf": 0.9
+  },
+  {
+   "id": "G6-badcase-standalone",
+   "reg": null,
+   "cand": "contract_bad.txt",
+   "expect": "丙级",
+   "expect_conf": 0.85
+  }
+ ],
+ "disclosure": {
+  "file": "report.txt",
+  "field": "净利润",
+  "expect_value": "4200000"
+ }
+}

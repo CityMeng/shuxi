@@ -111,7 +111,14 @@ section[data-testid="stSidebar"] {
   background: linear-gradient(180deg, #F5F1E8, #F0EBE0);
   border-right: 1px solid var(--line-strong);
   min-width: 322px; max-width: 322px;
+  transform: none !important;  /* 导航锁定: 禁止滑出 (见下) */
 }
+/* 导航做死 (用户 2026-10-27 令): Streamlit 收起侧栏只给 section 加
+   translateX(-300px) 却仍占 322px 布局宽, 主区被顶到右侧、左边留
+   一大条空白。演示系统导航必须常驻: 藏收起钮 + 强制 transform 归零,
+   任何途径都收不起来, 主区永远从侧栏右侧正常排版。 */
+[data-testid="stSidebarCollapseButton"],
+[data-testid="stSidebarCollapsedControl"] { display: none !important; }
 section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] { padding-top: 1.4rem; }
 .sx-side-brand { display: flex; align-items: center; gap: 12px; padding: 2px 0 4px; }
 .sx-logo-lg { width: 44px; height: 44px; border-radius: 12px; }
