@@ -102,6 +102,16 @@ def main():
                   and len(led2.by_type("registration")) == 3 and okc
                   and not at.exception)
 
+    # 状态条下钻: 四格带 goto 链接, goto 参数能切换导航页
+    strip_html = "".join(m.value for m in at.markdown)
+    check("AppTest 状态条四格带下钻链接",
+          all(f"?goto={g}" in strip_html
+              for g in ("ledger", "register", "receipts", "chain")))
+    at.query_params["goto"] = "receipts"
+    at.run()
+    check("AppTest goto 参数跳转授权与账本页",
+          at.sidebar.radio[0].value == "授权与账本" and not at.exception)
+
     print(f"\n==== 1c 测试: {sum(R)}/{len(R)} PASS ====")
     return 0 if all(R) else 1
 

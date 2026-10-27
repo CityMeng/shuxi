@@ -283,6 +283,11 @@ div[data-testid="stAlert"] { border-radius: 10px; font-size: 14.5px; }
 .sx-stat:first-child { border-left: none; }
 .sx-stat-ico { width: 32px; height: 32px; border-radius: 8px; flex: none;
   display: flex; align-items: center; justify-content: center; border: 1px solid; }
+a.sx-stat { text-decoration: none; color: inherit; cursor: pointer;
+  border-radius: 10px; transition: background .15s ease; }
+a.sx-stat:hover { background: #F5F1E8; }
+a.sx-stat:hover .sx-stat-num { color: var(--seal-deep); }
+a.sx-stat:active { background: #F0EBE0; }
 .sx-stat-num { font-family: var(--mono);
   font-size: 17px; font-weight: 700; color: var(--ink); }
 .sx-stat-label { font-size: 12px; color: var(--ink-2); letter-spacing: .05em; margin-bottom: 1px; }
@@ -536,24 +541,30 @@ def status_strip(ledger):
     ok, _, _ = ledger.verify_chain()
     dot = "#059669" if ok else "#C23531"
     state = "全链可验" if ok else "链异常"
+    # 四格整格可点 (下钻): 链接带 goto 参数, main() 据此切换导航页
     cells = [
         ("#FAF8F3", "#E7E2D6", "#78716C",
-         _SVG_LAYERS, "账本高度", str(len(ledger.entries))),
+         _SVG_LAYERS, "账本高度", str(len(ledger.entries)),
+         "ledger", "查看账本状态"),
         ("#FAF8F3", "#E7E2D6", "#78716C",
-         _SVG_FILECHECK, "已登记凭证", str(len(ledger.by_type('registration')))),
+         _SVG_FILECHECK, "已登记凭证", str(len(ledger.by_type('registration'))),
+         "register", "查看已登记凭证"),
         ("#FAF8F3", "#E7E2D6", "#78716C",
-         _SVG_RECEIPT, "验真回执", str(len(ledger.by_type('receipt')))),
+         _SVG_RECEIPT, "验真回执", str(len(ledger.by_type('receipt'))),
+         "receipts", "查看验真回执"),
         ("rgba(5,150,105,.07)", "rgba(5,150,105,.30)", "#059669",
          _SVG_LINK, "链状态",
-         f'<span class="sx-dot" style="background:{dot}"></span>{state}'),
+         f'<span class="sx-dot" style="background:{dot}"></span>{state}',
+         "chain", "查看账本状态"),
     ]
     html = ['<div class="sx-strip">']
-    for bg, bd, fg, icon, label, value in cells:
+    for bg, bd, fg, icon, label, value, goto, hint in cells:
         html.append(
-            f'<div class="sx-stat"><div class="sx-stat-ico" '
+            f'<a class="sx-stat" href="?goto={goto}" target="_self" '
+            f'title="{hint}"><div class="sx-stat-ico" '
             f'style="background:{bg};border-color:{bd};color:{fg}">{icon}</div>'
             f'<div><div class="sx-stat-label">{label}</div>'
-            f'<div class="sx-stat-num">{value}</div></div></div>')
+            f'<div class="sx-stat-num">{value}</div></div></a>')
     html.append('</div>')
     st.markdown("".join(html), unsafe_allow_html=True)
 
@@ -916,6 +927,19 @@ def page_ledger(ledger, packages, actors):
 def main():
     st.set_page_config(page_title="数玺", page_icon="玺", layout="wide")
     st.markdown(CSS, unsafe_allow_html=True)
+    # 状态条下钻: ?goto= 链接落点 (须在导航单选实例化之前处理)
+    _goto = st.query_params.get("goto")
+    if _goto:
+        if isinstance(_goto, list):
+            _goto = _goto[0] if _goto else None
+        _target = {"ledger": "授权与账本", "register": "登记",
+                   "receipts": "授权与账本", "chain": "授权与账本"}.get(_goto)
+        if _target:
+            st.session_state["nav_page"] = _target
+        try:
+            del st.query_params["goto"]
+        except Exception:
+            pass
     ledger, packages, actors = init_stores(DATA_DIR)
     if st.session_state.pop("do_seed_after_reset", False):
         # 演示重置后半程: 账本刚清空重建, 在此补齐演示三件套并给出提示
@@ -938,7 +962,7 @@ def main():
         <div class="sx-brand-bar"></div>
         <div class="sx-brand-sub">规范 v1.3 · 套件 SXA1 · 原型</div>""",
                     unsafe_allow_html=True)
-        page = st.radio("导航", ["登记", "验真", "授权与账本"])
+        page = st.radio("导航", ["登记", "验真", "授权与账本"], key="nav_page")
         ok_sb, _, _ = ledger.verify_chain()
         dot_sb = "#10B981" if ok_sb else "#C23531"
         state_sb = "全链可验" if ok_sb else "链异常"
