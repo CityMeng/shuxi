@@ -917,14 +917,22 @@ def main():
           <div class="sx-brand-sub" style="margin-top:3px">检查点 {len(ledger.by_type('checkpoint'))} · 链头 <span style="font-family:var(--mono)">{ledger.head_hash()[:10]}…</span></div>
         </div>""", unsafe_allow_html=True)
         if st.button("一键载入演示数据"):
+            # 提示先存会话再刷新: 直接 success 后接 rerun, 提示会被刷新冲掉,
+            # 人眼看不见, 按钮看着像死的 (2026-10-27 用户实测抓到)。
             try:
                 certs = seed_demo(ledger, packages, actors[REGISTRAR_NAME])
             except Exception as e:  # 环境异常不许把英文堆栈露给用户
-                st.error(f"演示数据载入失败：{e}。请把这条提示截图发给维护者。")
+                st.session_state["seed_flash"] = (
+                    "error", f"演示数据载入失败：{e}。请把这条提示截图发给维护者。")
             else:
-                st.success(f"已补齐演示数据：新增 {len(certs)} 张演示凭证" if certs
-                           else "演示数据已齐全（3 张演示凭证都在，可直接去验真页试）")
-                st.rerun()
+                st.session_state["seed_flash"] = (
+                    "success",
+                    f"已补齐演示数据：新增 {len(certs)} 张演示凭证" if certs
+                    else "演示数据已齐全（3 张演示凭证都在，可直接去验真页试）")
+            st.rerun()
+        _flash = st.session_state.pop("seed_flash", None)
+        if _flash:
+            (st.success if _flash[0] == "success" else st.error)(_flash[1])
         st.markdown("""
         <div class="sx-side-card">
           <div class="sx-sc-label">演示说明</div>
