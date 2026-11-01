@@ -102,6 +102,22 @@ def main():
                   and len(led2.by_type("registration")) == 3 and okc
                   and not at.exception)
 
+    # 检查点外部锚定: 停用模式下点检查点, 锚点如实入账且页面标注
+    os.environ["SHUXI_ANCHOR"] = "off"
+    at.sidebar.radio[0].set_value("授权与账本").run()
+    cp_btn = [b for b in at.button if b.label == "写入检查点（封印当前链头）"]
+    check("AppTest 账本页有检查点按钮", len(cp_btn) == 1)
+    if cp_btn:
+        cp_btn[0].click().run()
+        led3 = Ledger(os.path.join(os.environ["SHUXI_DATA_DIR"],
+                                   "ledger.jsonl"))
+        cps = led3.by_type("checkpoint")
+        page_html = "".join(m.value for m in at.markdown)
+        check("AppTest 检查点携带停用锚点且页面标注",
+              bool(cps)
+              and cps[-1]["payload"]["anchor"]["status"] == "disabled"
+              and "外部锚定 · 已停用" in page_html and not at.exception)
+
     # 状态条下钻: 四格带 goto 链接, goto 参数能切换导航页
     strip_html = "".join(m.value for m in at.markdown)
     check("AppTest 状态条四格带下钻链接",

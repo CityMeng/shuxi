@@ -1,0 +1,264 @@
+{
+  "files": [
+    {
+      "sec_code": "301587",
+      "sec_name": "中瑞股份",
+      "title": "2026年半年度报告摘要（更正后）",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-10-27/1225622305.PDF",
+      "file": "1225622305.PDF",
+      "pages": 5,
+      "n_fields": 27,
+      "sha256": "2325ea8a16f8f1f92a6cb4e43679ad84e0b605f07b0ac2a509929e4c166b6722",
+      "tamper_note": "金额 301587 出现 2 处, 首位数字 3→4, 回写 2 处"
+    },
+    {
+      "sec_code": "002762",
+      "sec_name": "金发拉比",
+      "title": "2026年半年度报告摘要（更新后）",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-09-02/1225542180.PDF",
+      "file": "1225542180.PDF",
+      "pages": 3,
+      "n_fields": 21,
+      "sha256": "f4be04f62542bd42b25cce3efb4158fa1365db008844644dea039fd1eada443c",
+      "tamper_note": "金额 002762 出现 3 处, 首位数字 0→1, 回写 3 处"
+    },
+    {
+      "sec_code": "002531",
+      "sec_name": "天顺风能",
+      "title": "2026年半年度报告摘要（更正后）",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-09-15/1225562888.PDF",
+      "file": "1225562888.PDF",
+      "pages": 3,
+      "n_fields": 34,
+      "sha256": "6cfe5eea607325dc0036feb25ca1d1e8bc700ea9dc9a809a911009b45ed8f1b6",
+      "tamper_note": "金额 002531 出现 2 处, 首位数字 0→1, 回写 2 处"
+    },
+    {
+      "sec_code": "000926",
+      "sec_name": "福星股份",
+      "title": "2025年年度报告摘要（更正后）",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-06-13/1225367350.PDF",
+      "file": "1225367350.PDF",
+      "pages": 4,
+      "n_fields": 32,
+      "sha256": "0895eed2bd4c8b527a759b292c31e8b003c8522b2e2dab3b7800d39bb32748b5",
+      "tamper_note": "金额 85578818 出现 4 处, 首位数字 8→9, 回写 4 处"
+    },
+    {
+      "sec_code": "603976",
+      "sec_name": "正川股份",
+      "title": "2026年半年度报告摘要（修订版）",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-09-05/1225548585.PDF",
+      "file": "1225548585.PDF",
+      "pages": 4,
+      "n_fields": 21,
+      "sha256": "a9cba5b739c4ac6b43e0278ad804e472fbc06a21097f8fab4fde25ad7ca99f97",
+      "tamper_note": "金额 603976 出现 2 处, 首位数字 6→7, 回写 2 处"
+    },
+    {
+      "sec_code": "601279",
+      "sec_name": "英利汽车",
+      "title": "长春英利汽车工业股份有限公司2026年半年度报告摘要（更正版）",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-09-01/1225536246.PDF",
+      "file": "1225536246.PDF",
+      "pages": 4,
+      "n_fields": 18,
+      "sha256": "1efe399a0c5e68a8e37dbcaba0213ae74953e5debc8b5bd815610c29577c7239",
+      "tamper_note": "金额 601279 出现 2 处, 首位数字 6→7, 回写 2 处"
+    }
+  ],
+  "cases": [
+    {
+      "sec_name": "中瑞股份",
+      "case": "pristine",
+      "expected": "甲级",
+      "grade": "甲级",
+      "confidence": "0.99",
+      "baseline_ok": true
+    },
+    {
+      "sec_name": "中瑞股份",
+      "case": "resave",
+      "expected": "乙级",
+      "grade": "乙级",
+      "confidence": "0.9",
+      "baseline_ok": false
+    },
+    {
+      "sec_name": "中瑞股份",
+      "case": "rescan",
+      "expected": "乙级",
+      "grade": "乙级",
+      "confidence": "0.6",
+      "baseline_ok": false
+    },
+    {
+      "sec_name": "中瑞股份",
+      "case": "tamper",
+      "expected": "丁级",
+      "grade": "丁级",
+      "confidence": "0.95",
+      "baseline_ok": true
+    },
+    {
+      "sec_name": "金发拉比",
+      "case": "pristine",
+      "expected": "甲级",
+      "grade": "甲级",
+      "confidence": "0.99",
+      "baseline_ok": true
+    },
+    {
+      "sec_name": "金发拉比",
+      "case": "resave",
+      "expected": "乙级",
+      "grade": "乙级",
+      "confidence": "0.9",
+      "baseline_ok": false
+    },
+    {
+      "sec_name": "金发拉比",
+      "case": "rescan",
+      "expected": "乙级",
+      "grade": "乙级",
+      "confidence": "0.6",
+      "baseline_ok": false
+    },
+    {
+      "sec_name": "金发拉比",
+      "case": "tamper",
+      "expected": "丁级",
+      "grade": "丁级",
+      "confidence": "0.95",
+      "baseline_ok": true
+    },
+    {
+      "sec_name": "天顺风能",
+      "case": "pristine",
+      "expected": "甲级",
+      "grade": "甲级",
+      "confidence": "0.99",
+      "baseline_ok": true
+    },
+    {
+      "sec_name": "天顺风能",
+      "case": "resave",
+      "expected": "乙级",
+      "grade": "乙级",
+      "confidence": "0.9",
+      "baseline_ok": false
+    },
+    {
+      "sec_name": "天顺风能",
+      "case": "rescan",
+      "expected": "乙级",
+      "grade": "乙级",
+      "confidence": "0.6",
+      "baseline_ok": false
+    },
+    {
+      "sec_name": "天顺风能",
+      "case": "tamper",
+      "expected": "丁级",
+      "grade": "丁级",
+      "confidence": "0.95",
+      "baseline_ok": true
+    },
+    {
+      "sec_name": "福星股份",
+      "case": "pristine",
+      "expected": "甲级",
+      "grade": "甲级",
+      "confidence": "0.99",
+      "baseline_ok": true
+    },
+    {
+      "sec_name": "福星股份",
+      "case": "resave",
+      "expected": "乙级",
+      "grade": "乙级",
+      "confidence": "0.9",
+      "baseline_ok": false
+    },
+    {
+      "sec_name": "福星股份",
+      "case": "rescan",
+      "expected": "乙级",
+      "grade": "乙级",
+      "confidence": "0.6",
+      "baseline_ok": false
+    },
+    {
+      "sec_name": "福星股份",
+      "case": "tamper",
+      "expected": "丁级",
+      "grade": "乙级",
+      "confidence": "0.9",
+      "baseline_ok": true
+    },
+    {
+      "sec_name": "正川股份",
+      "case": "pristine",
+      "expected": "甲级",
+      "grade": "甲级",
+      "confidence": "0.99",
+      "baseline_ok": true
+    },
+    {
+      "sec_name": "正川股份",
+      "case": "resave",
+      "expected": "乙级",
+      "grade": "乙级",
+      "confidence": "0.9",
+      "baseline_ok": false
+    },
+    {
+      "sec_name": "正川股份",
+      "case": "rescan",
+      "expected": "乙级",
+      "grade": "乙级",
+      "confidence": "0.6",
+      "baseline_ok": false
+    },
+    {
+      "sec_name": "正川股份",
+      "case": "tamper",
+      "expected": "丁级",
+      "grade": "丁级",
+      "confidence": "0.95",
+      "baseline_ok": true
+    },
+    {
+      "sec_name": "英利汽车",
+      "case": "pristine",
+      "expected": "甲级",
+      "grade": "甲级",
+      "confidence": "0.99",
+      "baseline_ok": true
+    },
+    {
+      "sec_name": "英利汽车",
+      "case": "resave",
+      "expected": "乙级",
+      "grade": "乙级",
+      "confidence": "0.9",
+      "baseline_ok": false
+    },
+    {
+      "sec_name": "英利汽车",
+      "case": "rescan",
+      "expected": "乙级",
+      "grade": "乙级",
+      "confidence": "0.6",
+      "baseline_ok": false
+    },
+    {
+      "sec_name": "英利汽车",
+      "case": "tamper",
+      "expected": "丁级",
+      "grade": "丁级",
+      "confidence": "0.95",
+      "baseline_ok": true
+    }
+  ]
+}
