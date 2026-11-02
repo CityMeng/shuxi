@@ -270,6 +270,46 @@ def verify_file(ledger: Ledger, packages: PackageStore, verifier: KeyPair,
     return report
 
 
+
+# ---------------------------------------------------------------- 随手查
+def standalone_check(ledger: Ledger, data: bytes, ext: str,
+                     filename: str) -> dict:
+    """未登记文件初判 (不入账): 精确反查已登记原件 + 内部勾稽审计。
+
+    与某凭证登记原件逐字节一致 (精确双根全等) 时指出凭证与状态;
+    否则只按勾稽审计给初判 (丙级/未登记, 规范 §6 无原件口径),
+    不替代正式验真, 不生成回执。
+    """
+    if len(data) == 0:
+        raise ValueError("SX-E01: 0 字节文件拒收")
+    if len(data) > 500 * 1024 * 1024:
+        raise ValueError("SX-E04: 超过 500 MB 拒收")
+    comp = fp.compute_all(data, ext, None)
+    matched = None
+    for e in ledger.by_type("registration"):
+        ex = e["payload"]["exact"]
+        if (ex["sha256_root"] == comp["exact"]["sha256_root"]
+                and ex["sm3_root"] == comp["exact"]["sm3_root"]):
+            matched = e["payload"]["cert_id"]
+            break
+    cand_audit = gr.audit(data, ext, comp["text"], comp["fields"])
+    if matched:
+        state = resolve_status(ledger, matched)
+        if state["status"] == "有效":
+            verdict = {"grade": "甲级", "confidence": 0.99,
+                       "reasons": [f"与凭证 {matched} 的登记原件逐字节一致"
+                                   "（精确双根全等），正式验真将判甲级"]}
+        else:
+            verdict = {"grade": state["status"], "confidence": 0.99,
+                       "reasons": [f"与凭证 {matched} 的登记原件逐字节一致，"
+                                   f"但该凭证当前状态为{state['status']}"]}
+        return {"filename": filename, "matched_cert": matched,
+                "verdict": verdict, "audit": cand_audit, "comp": comp}
+    return {"filename": filename, "matched_cert": None,
+            "verdict": gr.grade_standalone(cand_audit),
+            "audit": cand_audit, "comp": comp}
+
+
 def verify_report(ledger: Ledger, report: dict) -> bool:
     """任何人持报告对照账本复核报告本身真伪 (§10)。"""
     body = {k: v for k, v in report.items()

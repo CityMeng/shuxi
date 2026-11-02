@@ -92,5 +92,23 @@ proc = subprocess.run([sys.executable, os.path.join(ROOT, "verify_bundle.py"),
                        bp, fp_], capture_output=True, text=True, timeout=120)
 check("离线复核脚本退出码 0", proc.returncode == 0 and "甲级" in proc.stdout)
 
+# 随手查: 精确反查命中 / 勾稽异常判丙 / 空账本未登记
+def _load(n):
+    with open(os.path.join(ROOT, "vectors", "samples", n), "rb") as f:
+        return f.read()
+
+sa1 = svc.standalone_check(ledger, _load("report.txt"), "txt", "report.txt")
+check("随手查原件反查命中判甲级",
+      sa1["matched_cert"] == cert and sa1["verdict"]["grade"] == "甲级")
+sa2 = svc.standalone_check(ledger, _load("fake.txt"), "txt", "fake.txt")
+check("随手查勾稽不平判丙级", sa2["verdict"]["grade"] == "丙级")
+sa3 = svc.standalone_check(ledger, _load("contract_bad.txt"), "txt",
+                           "contract_bad.txt")
+check("随手查大小写不符判丙级", sa3["verdict"]["grade"] == "丙级")
+l_empty = Ledger(os.path.join(tempfile.mkdtemp(), "ledger.jsonl"))
+sa4 = svc.standalone_check(l_empty, _load("report.txt"), "txt", "report.txt")
+check("随手查空账本判未登记",
+      sa4["verdict"]["grade"] == "未登记" and sa4["matched_cert"] is None)
+
 print(f"\n==== 扩展测试: {sum(R)}/{len(R)} PASS ====")
 sys.exit(0 if all(R) else 1)

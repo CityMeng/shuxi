@@ -832,6 +832,45 @@ def page_verify(ledger, packages, actors):
         st.markdown(chips, unsafe_allow_html=True)
         st.dataframe(rows, use_container_width=True, hide_index=True)
 
+    st.markdown('<div class="sx-sec">随手查 · 未登记文件初判</div>',
+                unsafe_allow_html=True)
+    st.markdown('<div class="sx-sec-sub">不选凭证，任何文件先过一遍：'
+                '反查是否与已登记原件逐字节一致，再查内部勾稽。'
+                '初判不入账，不替代正式验真。</div>',
+                unsafe_allow_html=True)
+    sa1, sa2 = st.columns([7, 5])
+    with sa1:
+        sa_up = st.file_uploader("上传任意文件", key="sa_up")
+    with sa2:
+        sa_pick = st.selectbox("或选用演示文件", ["—"] + list(quick),
+                               key="sa_pick")
+    sa_data, sa_name = None, None
+    if sa_up is not None:
+        sa_data, sa_name = sa_up.getvalue(), sa_up.name
+    elif sa_pick != "—":
+        with open(quick[sa_pick], "rb") as f:
+            sa_data = f.read()
+        sa_name = sa_pick
+    if sa_data is not None and st.button("开始初判", type="primary"):
+        try:
+            st.session_state["last_standalone"] = svc.standalone_check(
+                ledger, sa_data, ext_of(sa_name), sa_name)
+        except ValueError as e:
+            st.error(str(e))
+        st.rerun()
+    sa = st.session_state.get("last_standalone")
+    if sa:
+        grade_hero(sa["verdict"])
+        _comp = sa["comp"]
+        st.markdown(
+            f"<div class='sx-mono'>SHA-256 根　{_comp['exact']['sha256_root']}<br>"
+            f"SM3 根　　　{_comp['exact']['sm3_root']}<br>"
+            f"抽出字段　{len(_comp['fields'])} 个</div>",
+            unsafe_allow_html=True)
+        if sa["matched_cert"]:
+            st.info(f"已定位凭证 {sa['matched_cert']}：在上方选好该凭证，"
+                    "即可走正式验真并生成回执。")
+
 
 def rp_text(ledger, packages, cert):
     pkg = packages.get(cert)

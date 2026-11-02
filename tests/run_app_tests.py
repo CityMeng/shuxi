@@ -128,6 +128,12 @@ def main():
     check("AppTest goto 参数跳转授权与账本页",
           at.sidebar.radio[0].value == "授权与账本" and not at.exception)
 
+    # 随手查区块渲染在验真页
+    at.sidebar.radio[0].set_value("验真").run()
+    page_html2 = "".join(m.value for m in at.markdown)
+    check("AppTest 验真页有随手查区块",
+          "随手查 · 未登记文件初判" in page_html2 and not at.exception)
+
     print(f"\n==== 1c 测试: {sum(R)}/{len(R)} PASS ====")
     return 0 if all(R) else 1
 
