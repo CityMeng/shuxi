@@ -62,7 +62,7 @@ def main():
     check("1 账本无字段明文 (净利润值不入账)", "4200000" not in raw)
 
     # 2. 验真原件 -> 甲级 + 报告可复核 + 回执入账
-    rep = svc.verify_file(ledger, packages, verifier, "合作银行", cert,
+    rep = svc.verify_file(ledger, packages, verifier, "临溪商业银行", cert,
                           report_data, "txt", "report.txt", ts=T(hours=1))
     check("2 原件判甲级", rep["grade"] == "甲级")
     check("2 验真报告可被第三方复核", svc.verify_report(ledger, rep))
@@ -74,7 +74,7 @@ def main():
     check("2 篡改后的报告复核不通过", not svc.verify_report(ledger, bad_rep))
 
     # 3. 验真篡改件 -> 丁级定位
-    rep2 = svc.verify_file(ledger, packages, verifier, "合作银行", cert,
+    rep2 = svc.verify_file(ledger, packages, verifier, "临溪商业银行", cert,
                            tampered_data, "txt", "report_tampered.txt", ts=T(hours=2))
     diffs = [d["field"] for d in rep2["field_diffs"]]
     check("3 篡改判丁级并定位净利润", rep2["grade"] == "丁级" and "净利润" in diffs, str(diffs))
@@ -95,27 +95,27 @@ def main():
     ledger.append("registration", forged, stranger, ts=T(hours=3))
     st = svc.resolve_status(ledger, "SX-0099-AAAA")
     check("5 伪造登记被标记记录异常", st["status"] == "记录异常")
-    err = svc.verify_file(ledger, packages, verifier, "合作银行", "SX-0099-AAAA",
+    err = svc.verify_file(ledger, packages, verifier, "临溪商业银行", "SX-0099-AAAA",
                           report_data, "txt", "report.txt", ts=T(hours=3))
     check("5 伪造登记验真被拒", "error" in err)
 
     # 6. 授权: 次数上限与过期 (账本时间口径)
     cert2 = svc.register_file(ledger, packages, registrar, "示例公司财务部",
                               "report.txt", report_data, "txt", "pass-1", ts=T(hours=4))
-    au = svc.create_authorization(ledger, registrar, cert2, "合作银行",
+    au = svc.create_authorization(ledger, registrar, cert2, "临溪商业银行",
                                   verifier.fingerprint, days=7, max_count=2, ts=T(hours=4))
-    r = svc.verify_file(ledger, packages, verifier, "合作银行", cert2,
+    r = svc.verify_file(ledger, packages, verifier, "临溪商业银行", cert2,
                         report_data, "txt", "report.txt", auth_id=au, ts=T(hours=5))
     check("6 授权内第 1 次验真通过", r.get("grade") == "甲级")
-    svc.verify_file(ledger, packages, verifier, "合作银行", cert2,
+    svc.verify_file(ledger, packages, verifier, "临溪商业银行", cert2,
                     report_data, "txt", "report.txt", auth_id=au, ts=T(hours=6))
-    r3 = svc.verify_file(ledger, packages, verifier, "合作银行", cert2,
+    r3 = svc.verify_file(ledger, packages, verifier, "临溪商业银行", cert2,
                          report_data, "txt", "report.txt", auth_id=au, ts=T(hours=7))
     check("6 第 3 次被次数上限拦下", "error" in r3 and "次数" in r3["error"])
-    au2 = svc.create_authorization(ledger, registrar, cert2, "合作银行",
+    au2 = svc.create_authorization(ledger, registrar, cert2, "临溪商业银行",
                                    verifier.fingerprint, days=1, max_count=5, ts=T(hours=8))
     svc.checkpoint(ledger, registrar, ts=T(days=3))
-    r4 = svc.verify_file(ledger, packages, verifier, "合作银行", cert2,
+    r4 = svc.verify_file(ledger, packages, verifier, "临溪商业银行", cert2,
                          report_data, "txt", "report.txt", auth_id=au2, ts=T(days=3))
     check("6 过期授权被拦下 (账本时间)", "error" in r4 and "过期" in r4["error"])
 
@@ -126,7 +126,7 @@ def main():
     except ValueError:
         check("7 非登记方作废被拒", True)
     svc.revoke(ledger, registrar, cert2, ts=T(days=3, hours=2))
-    r5 = svc.verify_file(ledger, packages, verifier, "合作银行", cert2,
+    r5 = svc.verify_file(ledger, packages, verifier, "临溪商业银行", cert2,
                          report_data, "txt", "report.txt", ts=T(days=3, hours=3))
     check("7 作废后验真报已作废", r5.get("grade") == "已作废")
 
@@ -155,7 +155,7 @@ def main():
                               "report.txt", report_data, "txt", "pass-3", ts=T(days=3, hours=8))
     svc.key_notice(ledger, KeyPair.generate(), reg3.fingerprint, "争议",
                    "疑似冒用, 核查中", ts=T(days=3, hours=9))
-    r6 = svc.verify_file(ledger, packages, verifier, "合作银行", cert4,
+    r6 = svc.verify_file(ledger, packages, verifier, "临溪商业银行", cert4,
                          report_data, "txt", "report.txt", ts=T(days=3, hours=10))
     check("9 争议状态照常判甲级并加注",
           r6.get("grade") == "甲级" and any("争议" in x for x in r6["reasons"]))
@@ -202,7 +202,7 @@ def main():
     from engine import service as _svc
     empty_pk = _svc.PackageStore(os.path.join(tmp, "none.json"))
     conv = load("report_converted.txt")
-    repX = svc.verify_file(ledger, empty_pk, verifier, "合作银行", cert,
+    repX = svc.verify_file(ledger, empty_pk, verifier, "临溪商业银行", cert,
                            conv, "txt", "report_converted.txt", ts=T(days=3, hours=14))
     check("13 无包验真文本件无证据判待复核 (非丁级嫌疑)",
           repX.get("grade") == "待人工复核",
@@ -210,13 +210,13 @@ def main():
     scan_cert = svc.register_file(ledger, packages, registrar, "示例公司财务部",
                                   "scan_a.png", load("scan_a.png"), "png",
                                   "pass-1", ts=T(days=3, hours=14))
-    repZ = svc.verify_file(ledger, empty_pk, verifier, "合作银行", scan_cert,
+    repZ = svc.verify_file(ledger, empty_pk, verifier, "临溪商业银行", scan_cert,
                            load("scan_b.jpg"), "jpg", "scan_b.jpg",
                            ts=T(days=3, hours=14))
     check("13 无包验真扫描件凭感知指纹判乙封顶60%",
           repZ.get("grade") == "乙级" and repZ.get("confidence") == "0.6",
           f"got {repZ.get('grade')}/{repZ.get('confidence')}")
-    repY = svc.verify_file(ledger, packages, verifier, "合作银行", cert,
+    repY = svc.verify_file(ledger, packages, verifier, "临溪商业银行", cert,
                            conv, "txt", "report_converted.txt", ts=T(days=3, hours=15))
     from engine import fp as _fp
     compY = _fp.compute_all(conv, "txt", packages.get(cert)["salts"])
@@ -228,14 +228,14 @@ def main():
           f"root_equal={root_equal}")
 
     # 14. v1.3 授权记名绑定: 他人持授权号验真被拒, 本人通过
-    au3 = svc.create_authorization(ledger, registrar, cert, "合作银行",
+    au3 = svc.create_authorization(ledger, registrar, cert, "临溪商业银行",
                                    verifier.fingerprint, days=7, max_count=3,
                                    ts=T(days=3, hours=16))
     repS = svc.verify_file(ledger, packages, stranger, "路人", cert,
                            report_data, "txt", "report.txt", auth_id=au3,
                            ts=T(days=3, hours=17))
     check("14 陌生人持他人授权被拒", "error" in repS and "被授权方" in repS["error"])
-    repT = svc.verify_file(ledger, packages, verifier, "合作银行", cert,
+    repT = svc.verify_file(ledger, packages, verifier, "临溪商业银行", cert,
                            report_data, "txt", "report.txt", auth_id=au3,
                            ts=T(days=3, hours=18))
     check("14 被授权方本人验真通过", repT.get("grade") == "甲级")
@@ -245,12 +245,12 @@ def main():
         ledger, packages, registrar, "示例公司财务部", "季度材料包",
         [("report.txt", report_data), ("contract_bad.txt", load("contract_bad.txt"))],
         "pass-1", ts=T(days=3, hours=19))
-    vs = svc.verify_file_set(ledger, packages, verifier, "合作银行", set_cert,
+    vs = svc.verify_file_set(ledger, packages, verifier, "临溪商业银行", set_cert,
                              [("report.txt", report_data),
                               ("contract_bad.txt", load("contract_bad.txt"))],
                              ts=T(days=3, hours=20))
     check("15 文件集全甲汇总甲级", vs["summary"] == "甲级" and vs["complete"])
-    vs2 = svc.verify_file_set(ledger, packages, verifier, "合作银行", set_cert,
+    vs2 = svc.verify_file_set(ledger, packages, verifier, "临溪商业银行", set_cert,
                               [("report.txt", tampered_data)],
                               ts=T(days=3, hours=21))
     check("15 成员篡改定位且缺失明示不完整",

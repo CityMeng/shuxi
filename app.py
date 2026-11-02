@@ -36,8 +36,8 @@ from engine.ledger import KeyPair, Ledger  # noqa: E402
 
 DATA_DIR = os.environ.get("SHUXI_DATA_DIR", os.path.join(BASE_DIR, "data"))
 DEMO_PASS = os.environ.get("SHUXI_DEMO_PASS", "shuxi-demo")
-REGISTRAR_NAME = "示例新能源有限公司 · 财务部"
-VERIFIER_NAME = "合作银行 · 核验岗"
+REGISTRAR_NAME = "望舒新能源科技有限公司 · 财务部出纳"
+VERIFIER_NAME = "临溪商业银行 · 风控部核验员"
 
 GRADE_COLORS = {  # 方案B 等级色 (宣纸亮底深色版, 纸面可读优先)
     "甲级": "#059669", "乙级": "#0284C7", "丙级": "#D97706",
@@ -1313,11 +1313,11 @@ def main():
         if _armed:
             st.warning("将清空当前账本的全部记录（登记、验真回执、授权、检查点），"
                        "回到初始演示状态。再点一次按钮确认重置。")
-        st.markdown("""
+        st.markdown(f"""
         <div class="sx-side-card">
           <div class="sx-sc-label">演示说明</div>
-          <div class="sx-actor"><span>登记方</span>示例新能源有限公司 · 财务部</div>
-          <div class="sx-actor"><span>验真方</span>合作银行 · 核验岗</div>
+          <div class="sx-actor"><span>登记方</span>{REGISTRAR_NAME}</div>
+          <div class="sx-actor"><span>验真方</span>{VERIFIER_NAME}</div>
           <div class="sx-actor-note">出场主体均为虚构，仅用于演示</div>
           <div class="sx-side-sell">三层指纹 · 四级验真<br>哈希存证 / 一键验真 / 授权留痕</div>
         </div>""", unsafe_allow_html=True)
