@@ -599,7 +599,6 @@ def top_bar(ledger):
       <div class="sx-top-left">
         <div class="sx-logo"><div class="sx-logo-in">玺</div></div>
         <span class="sx-top-title">数玺</span>
-        <span class="sx-spec-chip">规范 v1.3 · 套件 SXA1</span>
       </div>
       <div class="sx-top-chip"><span class="sx-dot" style="background:{dot}"></span>{state} · 高度 {len(ledger.entries)}</div>
     </div>""", unsafe_allow_html=True)
@@ -1259,7 +1258,7 @@ def main():
           </div>
         </div>
         <div class="sx-brand-bar"></div>
-        <div class="sx-brand-sub">规范 v1.3 · 套件 SXA1 · 原型</div>""",
+""",
                     unsafe_allow_html=True)
         page = st.radio("导航", ["登记", "验真", "授权与账本"], key="nav_page")
         ok_sb, _, _ = ledger.verify_chain()
