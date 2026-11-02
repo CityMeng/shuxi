@@ -405,13 +405,16 @@ def init_stores(data_dir: str):
     packages = svc.PackageStore(os.path.join(data_dir, "packages.json"))
     actors_path = os.path.join(data_dir, "actors.json")
     actors: dict[str, KeyPair] = {}
+    raw = {}
     if os.path.exists(actors_path):
         raw = json.load(open(actors_path, encoding="utf-8"))
         for name, rec in raw.items():
             actors[name] = KeyPair.from_encrypted_pem(rec["privkey_pem"], DEMO_PASS)
-    else:
-        raw = {}
-        for name in (REGISTRAR_NAME, VERIFIER_NAME):
+    # 当前主体名缺失时补齐并写回 (改名后旧实例不再 KeyError);
+    # 旧条目保留, 历史登记与回执的签名依旧可验。
+    missing = [n for n in (REGISTRAR_NAME, VERIFIER_NAME) if n not in actors]
+    if missing:
+        for name in missing:
             kp = KeyPair.generate()
             actors[name] = kp
             raw[name] = {"privkey_pem": kp.private_pem_encrypted(DEMO_PASS),

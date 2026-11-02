@@ -123,5 +123,24 @@ check("PDF 报告含凭证号与等级",
 check("锚定摘要返回一句话", isinstance(_las(ledger, tmp), str)
       and len(_las(ledger, tmp)) >= 6)
 
+# 改名迁移回归: 旧名 actors.json 启动后, 当前主体自动补齐且旧条目保留
+import importlib.util as _ilu
+_spec = _ilu.spec_from_file_location(
+    "shuxi_app", os.path.join(ROOT, "app.py"))
+_app = _ilu.module_from_spec(_spec)
+_spec.loader.exec_module(_app)
+_mig_dir = tempfile.mkdtemp()
+_old_kp = KeyPair.generate()
+_old_raw = {"示例新能源有限公司 · 财务部": {
+    "privkey_pem": _old_kp.private_pem_encrypted(_app.DEMO_PASS),
+    "pub": _old_kp.public_b64, "fp": _old_kp.fingerprint}}
+with open(os.path.join(_mig_dir, "actors.json"), "w",
+          encoding="utf-8") as _f:
+    json.dump(_old_raw, _f, ensure_ascii=False)
+_l3, _p3, _a3 = _app.init_stores(_mig_dir)
+check("改名后旧实例自动补齐当前主体密钥",
+      _app.REGISTRAR_NAME in _a3 and _app.VERIFIER_NAME in _a3
+      and "示例新能源有限公司 · 财务部" in _a3)
+
 print(f"\n==== 扩展测试: {sum(R)}/{len(R)} PASS ====")
 sys.exit(0 if all(R) else 1)
