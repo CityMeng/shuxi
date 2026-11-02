@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import base64
+import html
 import io
 import json
 import os
@@ -30,6 +31,7 @@ from engine import fp, grade as gr  # noqa: E402
 from engine import service as svc  # noqa: E402
 from engine import anchor as anchor_mod  # noqa: E402
 from engine import bundle as bundle_mod  # noqa: E402
+from engine import report_pdf as report_pdf_mod  # noqa: E402
 from engine.ledger import KeyPair, Ledger  # noqa: E402
 
 DATA_DIR = os.environ.get("SHUXI_DATA_DIR", os.path.join(BASE_DIR, "data"))
@@ -243,6 +245,30 @@ div[data-testid="stAlert"] { border-radius: 10px; font-size: 14.5px; }
 .sx-cert-id { font-family: var(--mono);
   font-size: 24px; font-weight: 700; letter-spacing: .02em; color: var(--ink);
   line-height: 1.45; padding: 2px 0; }
+.sx-diffbox { background:#FDF2F2; border:1px solid #F0C6C6;
+  border-left:5px solid #C23531; border-radius:12px; padding:10px 14px;
+  margin:10px 0 4px; font-size:14.5px; color:#1F2937; line-height:1.9; }
+.sx-diffbox .sx-diff-title { font-weight:700; color:#991B1B;
+  font-size:13px; letter-spacing:.08em; }
+.sx-diff-old { background:#EDEAE2; color:#6B7280; text-decoration:line-through;
+  padding:0 5px; border-radius:4px; font-family:var(--mono); }
+.sx-diff-new { background:#FDE8E8; color:#B91C1C; font-weight:700;
+  padding:0 5px; border-radius:4px; font-family:var(--mono); }
+.sx-diff-delta { color:#B91C1C; font-weight:700; }
+.sx-stamp-mini { display:inline-block; border:1.5px solid #C23531;
+  color:#C23531; border-radius:4px; padding:0 5px; font-size:11.5px;
+  font-weight:700; transform:rotate(-6deg); letter-spacing:.15em;
+  margin-left:6px; background:#FFF5F5; }
+table.sx-ftable { width:100%; border-collapse:collapse; font-size:13.5px; }
+table.sx-ftable th { text-align:left; color:#78716C; font-weight:600;
+  border-bottom:1px solid #E7E2D6; padding:5px 8px; }
+table.sx-ftable td { border-bottom:1px solid #F0EBE0; padding:5px 8px;
+  color:#1F2937; }
+td.sx-f-old { background:#F5F1E8; color:#6B7280;
+  text-decoration:line-through; font-family:var(--mono); }
+td.sx-f-new { background:#FDE8E8; color:#B91C1C; font-weight:700;
+  font-family:var(--mono); }
+td.sx-f-mono { font-family:var(--mono); }
 .sx-mono { font-family: var(--mono);
   font-size: 12px; line-height: 1.6; word-break: break-all; color: var(--ink-2); }
 .sx-mono-box { background: #FAF8F3; border: 1px solid var(--line);
@@ -434,6 +460,46 @@ def do_verify(ledger, packages, verifier_kp, cert_id, filename, data,
             "filename": filename, "elapsed_ms": elapsed_ms}
 
 
+def run_tour(ledger, packages, actors):
+    """评委导览: 用真实服务调用连跑四步, 结果在登记页整屏呈现。"""
+    seed_demo(ledger, packages, actors[REGISTRAR_NAME])
+    regs = {}
+    for e in ledger.by_type("registration"):
+        pkg = packages.get(e["payload"]["cert_id"])
+        if pkg and svc.resolve_status(
+                ledger, e["payload"]["cert_id"])["status"] == "有效":
+            regs[pkg["filename"]] = e["payload"]["cert_id"]
+    sample_dir = os.path.join(BASE_DIR, "vectors", "samples")
+
+    def _load(n):
+        with open(os.path.join(sample_dir, n), "rb") as f:
+            return f.read()
+
+    steps = [{"kind": "seed",
+              "title": "第一步 · 存证母本（演示三件套已入账）", "regs": regs}]
+    cert = regs.get("report.txt")
+    res = do_verify(ledger, packages, actors[VERIFIER_NAME], cert,
+                    "report_tampered.txt", _load("report_tampered.txt"))
+    steps.append({"kind": "verify",
+                  "title": "第二步 · 篡改件验真（净利润被改大）", "res": res})
+    sa = svc.standalone_check(ledger, _load("fake.txt"), "txt", "fake.txt")
+    steps.append({"kind": "standalone",
+                  "title": "第三步 · 随手查穿透（未登记文件初判）", "sa": sa})
+    made_cp = False
+    if not ledger.by_type("checkpoint"):
+        anch = anchor_mod.stamp_digest(ledger.head_hash())
+        svc.checkpoint(ledger, actors[REGISTRAR_NAME], anchor=anch)
+        made_cp = True
+    bundle = bundle_mod.build_bundle(ledger, packages, cert,
+                                     report=res["report"])
+    steps.append({"kind": "bundle",
+                  "title": "第四步 · 离线证据包（可断网复核）",
+                  "bundle": bundle, "made_cp": made_cp,
+                  "anchor_line": anchor_mod.latest_anchor_summary(
+                      ledger, DATA_DIR)})
+    return steps
+
+
 def find_cert_by_filename(ledger, filename):
     found = None
     for e in ledger.by_type("registration"):
@@ -572,6 +638,75 @@ def status_strip(ledger):
     st.markdown("".join(html), unsafe_allow_html=True)
 
 
+def fmt_field_value(v):
+    if v is None:
+        return "（无）"
+    try:
+        f = float(str(v).replace(",", ""))
+    except (TypeError, ValueError):
+        return str(v)
+    return f"{f:,.2f}".rstrip("0").rstrip(".")
+
+
+def diff_strip_html(report):
+    """丁级差异条: 原值删除线 → 篡改值红底 + 涨跌幅 + 篡改小戳。"""
+    diffs = (report.get("field_diffs")
+             or (report.get("evidence") or {}).get("field_diffs") or [])
+    if not diffs:
+        return ""
+    rows = []
+    for d in diffs:
+        old = fmt_field_value(d.get("registered"))
+        new = fmt_field_value(d.get("candidate"))
+        delta = ""
+        try:
+            r = float(str(d.get("registered")).replace(",", ""))
+            c = float(str(d.get("candidate")).replace(",", ""))
+            if r != 0:
+                pct = (c - r) / abs(r) * 100
+                delta = (f' <span class="sx-diff-delta">'
+                         f'({pct:+.1f}%)</span>')
+        except (TypeError, ValueError):
+            pass
+        rows.append(
+            f'<div>{html.escape(str(d.get("field")))}：'
+            f'<span class="sx-diff-old">{html.escape(old)}</span> → '
+            f'<span class="sx-diff-new">{html.escape(new)}</span>{delta}'
+            f'<span class="sx-stamp-mini">篡改</span></div>')
+    return ('<div class="sx-diffbox"><div class="sx-diff-title">'
+            '关键字段被改动</div>' + "".join(rows) + "</div>")
+
+
+def fields_table_html(reg_fields, cand_fields):
+    """语义字段对比表: 不同行原值删除线、待验值红底、状态盖篡改戳。"""
+    keys = sorted(set(reg_fields or {}) | set(cand_fields or {}),
+                  key=lambda k: k.encode("utf-8"))
+    if not keys:
+        return ""
+    trs = []
+    for k in keys:
+        rv = (reg_fields or {}).get(k)
+        cv = (cand_fields or {}).get(k)
+        if rv == cv:
+            trs.append(
+                f"<tr><td>{html.escape(str(k))}</td>"
+                f"<td class='sx-f-mono'>"
+                f"{html.escape(fmt_field_value(rv))}</td>"
+                f"<td class='sx-f-mono'>"
+                f"{html.escape(fmt_field_value(cv))}</td>"
+                f"<td style='color:#059669'>一致</td></tr>")
+        else:
+            trs.append(
+                f"<tr><td>{html.escape(str(k))}</td>"
+                f"<td class='sx-f-old'>"
+                f"{html.escape(fmt_field_value(rv))}</td>"
+                f"<td class='sx-f-new'>"
+                f"{html.escape(fmt_field_value(cv))}</td>"
+                f"<td><span class='sx-stamp-mini'>篡改</span></td></tr>")
+    return ("<table class='sx-ftable'><tr><th>字段</th><th>登记值</th>"
+            "<th>待验值</th><th>状态</th></tr>" + "".join(trs) + "</table>")
+
+
 def grade_hero(report, elapsed_ms=None):
     g = report.get("grade", "错误")
     color = GRADE_COLORS.get(g, "#C23531")
@@ -602,6 +737,40 @@ def grade_hero(report, elapsed_ms=None):
 # ---------------------------------------------------------------- 页面: 登记
 
 def page_register(ledger, packages, actors):
+    tour = st.session_state.get("tour")
+    if tour:
+        st.markdown('<div class="sx-sec">评委导览 · 核心链路一屏看完</div>',
+                    unsafe_allow_html=True)
+        st.markdown('<div class="sx-sec-sub">四步均为真实调用：存证、验真、'
+                    '随手查、证据包，结论与手工操作完全一致。</div>',
+                    unsafe_allow_html=True)
+        if st.button("关闭导览"):
+            st.session_state.pop("tour", None)
+            st.rerun()
+        for step in tour:
+            st.markdown(f'<div class="sx-sec" style="font-size:17px">'
+                        f'{step["title"]}</div>', unsafe_allow_html=True)
+            if step["kind"] == "seed":
+                for fn, cid in step["regs"].items():
+                    st.markdown(f'<div class="sx-sub">{fn} · 凭证 {cid}</div>',
+                                unsafe_allow_html=True)
+            elif step["kind"] == "verify":
+                grade_hero(step["res"]["report"], step["res"]["elapsed_ms"])
+                if step["res"]["report"].get("grade") == "丁级":
+                    _ds = diff_strip_html(step["res"]["report"])
+                    if _ds:
+                        st.markdown(_ds, unsafe_allow_html=True)
+            elif step["kind"] == "standalone":
+                grade_hero(step["sa"]["verdict"])
+            elif step["kind"] == "bundle":
+                st.markdown(f'<div class="sx-sub">{step["anchor_line"]}</div>',
+                            unsafe_allow_html=True)
+                st.download_button(
+                    "下载独立证据包（JSON，可离线复核）",
+                    json.dumps(step["bundle"], ensure_ascii=False, indent=1),
+                    file_name="shuxi-tour-bundle.json",
+                    mime="application/json")
+        st.markdown("---")
     st.markdown('<div class="sx-hero-title">登记</div>', unsafe_allow_html=True)
     st.markdown('<div class="sx-sub">为文件计算三层指纹并写入账本，领取防伪凭证。原件与字段明文不进账本。</div>',
                 unsafe_allow_html=True)
@@ -730,6 +899,10 @@ def page_verify(ledger, packages, actors):
     if res and res["reg"] and res["reg"]["payload"]["cert_id"] == cert:
         report, comp = res["report"], res["comp"]
         grade_hero(report, res["elapsed_ms"])
+        if report.get("grade") == "丁级":
+            _ds = diff_strip_html(report)
+            if _ds:
+                st.markdown(_ds, unsafe_allow_html=True)
         if "error" not in report:
             with st.expander("深挖证据 · 三层指纹 / 勾稽 / 报告凭证"):
                 st.markdown("**第一层 · 精确指纹**")
@@ -753,16 +926,10 @@ def page_verify(ledger, packages, actors):
                 st.write(f"文本相似度（3-gram Jaccard）：{sim_txt}（阈值 ≥ 0.90）")
                 st.markdown("**第三层 · 语义字段**")
                 pkg = packages.get(cert)
-                rows = []
-                keys = sorted(set((pkg["fields"] if pkg else {})) | set(comp["fields"]),
-                              key=lambda k: k.encode("utf-8"))
-                for k in keys:
-                    rv = pkg["fields"].get(k) if pkg else None
-                    cv = comp["fields"].get(k)
-                    rows.append({"字段": k, "登记值": rv, "待验值": cv,
-                                 "状态": "一致" if rv == cv else "不同"})
-                if rows:
-                    st.dataframe(rows, use_container_width=True, hide_index=True)
+                _ft = fields_table_html(pkg["fields"] if pkg else {},
+                                        comp["fields"])
+                if _ft:
+                    st.markdown(_ft, unsafe_allow_html=True)
                 else:
                     st.write("无语义字段（纯图像或无标签内容）")
                 st.markdown(f"<div class='sx-mono'>登记语义根　{rp['semantic_root']}<br>"
@@ -815,22 +982,17 @@ def page_verify(ledger, packages, actors):
                     mime="application/json")
             except ValueError:
                 pass
-
-    st.markdown('<div class="sx-sec">批量验真</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sx-sec-sub">一次上传多份文件：按文件名自动匹配凭证，五十份也是一张表。</div>',
-                unsafe_allow_html=True)
-    ups = st.file_uploader("批量上传", key="batch_up", accept_multiple_files=True)
-    if ups and st.button("开始批量验真"):
-        files = [(u.name, u.getvalue()) for u in ups]
-        rows, stats, total = do_batch(ledger, packages, actors[VERIFIER_NAME], files)
-        st.markdown(f"**{len(rows)} 份 · 总耗时 {total:.0f} ms**")
-        chips = "".join(
-            f'<span class="sx-batch-chip" style="color:{c};background:{c}1A;'
-            f'border-color:{c}59">{g} × {n}</span>'
-            for g, n in stats.items()
-            for c in [GRADE_COLORS.get(g, "#6B7280")])
-        st.markdown(chips, unsafe_allow_html=True)
-        st.dataframe(rows, use_container_width=True, hide_index=True)
+            try:
+                _pdf = report_pdf_mod.build_report_pdf(
+                    ledger, packages, cert, report,
+                    anchor_mod.latest_anchor_summary(ledger, DATA_DIR),
+                    comp=comp)
+                st.download_button(
+                    "下载验真报告 PDF（打印版）", _pdf,
+                    file_name=f"shuxi-report-{cert}.pdf",
+                    mime="application/pdf")
+            except Exception:
+                st.caption("（PDF 报告生成不可用）")
 
     st.markdown('<div class="sx-sec">随手查 · 未登记文件初判</div>',
                 unsafe_allow_html=True)
@@ -870,6 +1032,24 @@ def page_verify(ledger, packages, actors):
         if sa["matched_cert"]:
             st.info(f"已定位凭证 {sa['matched_cert']}：在上方选好该凭证，"
                     "即可走正式验真并生成回执。")
+
+    st.markdown('<div class="sx-sec">批量验真</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sx-sec-sub">一次上传多份文件：按文件名自动匹配凭证，五十份也是一张表。</div>',
+                unsafe_allow_html=True)
+    ups = st.file_uploader("批量上传", key="batch_up", accept_multiple_files=True)
+    if ups and st.button("开始批量验真"):
+        files = [(u.name, u.getvalue()) for u in ups]
+        rows, stats, total = do_batch(ledger, packages, actors[VERIFIER_NAME], files)
+        st.markdown(f"**{len(rows)} 份 · 总耗时 {total:.0f} ms**")
+        chips = "".join(
+            f'<span class="sx-batch-chip" style="color:{c};background:{c}1A;'
+            f'border-color:{c}59">{g} × {n}</span>'
+            for g, n in stats.items()
+            for c in [GRADE_COLORS.get(g, "#6B7280")])
+        st.markdown(chips, unsafe_allow_html=True)
+        st.dataframe(rows, use_container_width=True, hide_index=True)
+
+
 
 
 def rp_text(ledger, packages, cert):
@@ -1056,6 +1236,9 @@ def main():
             del st.query_params["goto"]
         except Exception:
             pass
+    if st.session_state.pop("tour_goto", False):
+        # 导览按钮在侧栏 (单选已实例化) 里改不了 nav_page, 用标志在此消费
+        st.session_state["nav_page"] = "登记"
     ledger, packages, actors = init_stores(DATA_DIR)
     if st.session_state.pop("do_seed_after_reset", False):
         # 演示重置后半程: 账本刚清空重建, 在此补齐演示三件套并给出提示
@@ -1106,6 +1289,14 @@ def main():
         _flash = st.session_state.pop("seed_flash", None)
         if _flash:
             (st.success if _flash[0] == "success" else st.error)(_flash[1])
+        if st.button("评委导览 · 一键连跑", type="primary"):
+            try:
+                st.session_state["tour"] = run_tour(ledger, packages, actors)
+                st.session_state["tour_goto"] = True
+            except Exception as e:
+                st.session_state["seed_flash"] = (
+                    "error", f"导览运行失败：{e}。请把这条提示截图发给维护者。")
+            st.rerun()
         _armed = st.session_state.get("reset_armed", False)
         if st.button("确认重置（清空账本）" if _armed else "重置演示数据"):
             if not _armed:

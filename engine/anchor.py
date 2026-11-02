@@ -167,3 +167,28 @@ class AnchorStore:
         self._data[str(seq)] = ots_b64
         with open(self.path, "w", encoding="utf-8") as f:
             json.dump(self._data, f)
+
+
+def latest_anchor_summary(ledger, data_dir: str) -> str:
+    """最近检查点的外部锚定状态一句话 (供验真报告与导览引用)。"""
+    cps = ledger.by_type("checkpoint")
+    if not cps:
+        return "账本暂无检查点，链头尚未对外锚定"
+    cp = cps[-1]
+    anch = (cp["payload"].get("anchor") or {})
+    if anch.get("type") != "opentimestamps":
+        return f"检查点 #{cp['seq']} 未附外部时间锚定"
+    if anch.get("status") == "disabled":
+        return f"检查点 #{cp['seq']} 外部锚定已停用（演示配置）"
+    store = AnchorStore(os.path.join(data_dir, "anchors.json"))
+    proof = store.get(cp["seq"]) or anch.get("ots_b64")
+    if not proof:
+        return f"检查点 #{cp['seq']} 锚定证明缺失"
+    pst = proof_status(proof)
+    if pst["status"] == "bitcoin":
+        return (f"检查点 #{cp['seq']} 已获比特币区块链确认"
+                f"（区块高度 {pst['height']}），时间锚定可独立核验")
+    if pst["status"] == "pending":
+        return (f"检查点 #{cp['seq']} 已提交 OpenTimestamps 公共日历，"
+                "待比特币网络确认")
+    return f"检查点 #{cp['seq']} 锚定证明解析异常"

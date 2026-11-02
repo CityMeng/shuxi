@@ -134,6 +134,20 @@ def main():
     check("AppTest 验真页有随手查区块",
           "随手查 · 未登记文件初判" in page_html2 and not at.exception)
 
+    # 评委导览: 点侧栏按钮连跑, 登记页出现导览面板
+    import os as _os
+    _os.environ["SHUXI_ANCHOR"] = "off"
+    _tour_btn = next((b for b in at.sidebar.button
+                      if b.label == "评委导览 · 一键连跑"), None)
+    check("AppTest 侧栏有评委导览按钮", _tour_btn is not None)
+    if _tour_btn is not None:
+        _tour_btn.click().run()
+        _html3 = "".join(m.value for m in at.markdown)
+        check("AppTest 导览面板含丁级与丙级",
+              "评委导览 · 核心链路一屏看完" in _html3
+              and "丁级" in _html3 and "丙级" in _html3
+              and not at.exception)
+
     print(f"\n==== 1c 测试: {sum(R)}/{len(R)} PASS ====")
     return 0 if all(R) else 1
 

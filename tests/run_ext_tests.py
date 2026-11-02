@@ -110,5 +110,18 @@ sa4 = svc.standalone_check(l_empty, _load("report.txt"), "txt", "report.txt")
 check("随手查空账本判未登记",
       sa4["verdict"]["grade"] == "未登记" and sa4["matched_cert"] is None)
 
+# PDF 验真报告 + 锚定摘要
+import fitz as _fitz
+from engine import report_pdf as _rpm
+from engine.anchor import latest_anchor_summary as _las
+_pdf = _rpm.build_report_pdf(ledger, packages, cert, rep, _las(ledger, tmp))
+check("PDF 验真报告生成", _pdf[:4] == b"%PDF" and 3000 < len(_pdf) < 500000)
+_doc = _fitz.open(stream=_pdf, filetype="pdf")
+_ptxt = "".join(p.get_text() for p in _doc)
+check("PDF 报告含凭证号与等级",
+      cert in _ptxt and rep["grade"] in _ptxt)
+check("锚定摘要返回一句话", isinstance(_las(ledger, tmp), str)
+      and len(_las(ledger, tmp)) >= 6)
+
 print(f"\n==== 扩展测试: {sum(R)}/{len(R)} PASS ====")
 sys.exit(0 if all(R) else 1)
