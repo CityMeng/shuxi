@@ -457,7 +457,8 @@ def do_verify(ledger, packages, verifier_kp, cert_id, filename, data,
                              cert_id, data, ext_of(filename), filename,
                              auth_id=auth_id)
     elapsed_ms = (time.perf_counter() - t0) * 1000
-    comp = fp.compute_all(data, ext_of(filename))
+    pkg = packages.get(cert_id)
+    comp = fp.compute_all(data, ext_of(filename), pkg["salts"] if pkg else None)
     reg = ledger.find_registration(cert_id)
     return {"report": report, "comp": comp, "reg": reg, "data": data,
             "filename": filename, "elapsed_ms": elapsed_ms}
