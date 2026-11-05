@@ -15,7 +15,7 @@ import os
 import secrets
 from datetime import timedelta
 
-from engine import fp, grade as gr
+from engine import fp, grade as gr, zkp
 from engine.ledger import (KeyPair, Ledger, canonical_bytes, now_iso,
                            parse_ts, verify_signature)
 
@@ -94,6 +94,22 @@ def register_file(ledger: Ledger, packages: PackageStore, registrar: KeyPair,
         degraded.append("感知指纹截断于 512 页 (规范 §4.5)")
     if not comp["fields"] and "SX-E05" not in error_codes:
         degraded.append("语义层无字段")
+    zk_commits = {}
+    for k, v in comp.get("fields", {}).items():
+        if v is None:
+            continue
+        try:
+            val_clean = str(v).replace(",", "").replace("¥", "").replace("元", "").strip()
+            val_int = int(float(val_clean))
+            c_int, r_int = zkp.pedersen_commit(val_int)
+            zk_commits[k] = {
+                "commitment": hex(c_int)[2:],
+                "blinding_r": hex(r_int)[2:],
+                "val": val_int
+            }
+        except (ValueError, TypeError):
+            continue
+
     payload = {
         "cert_id": cert_id,
         "spec_version": fp.SPEC_VERSION,
@@ -108,6 +124,7 @@ def register_file(ledger: Ledger, packages: PackageStore, registrar: KeyPair,
         "phashes": comp["perceptual"]["phashes"],
         "semantic_root": comp["semantic"]["root"],
         "field_keys": comp["semantic"]["keys"],
+        "zk_commitments": {k: v["commitment"] for k, v in zk_commits.items()},
         "reg_audit": aud["issues"],
         "degraded": degraded,
         "error_codes": error_codes,
@@ -119,6 +136,7 @@ def register_file(ledger: Ledger, packages: PackageStore, registrar: KeyPair,
         "fields": comp["fields"], "salts": comp["semantic"]["salts"],
         "text": comp["text"],
         "privkey_pem": registrar.private_pem_encrypted(passphrase),
+        "zk_commitments": zk_commits,
     })
     return cert_id
 

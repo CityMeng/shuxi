@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+  "description": "数玺可插拔声明式勾稽规则配置",
+  "aliases": {
+    "净利润": ["本年净收益", "税后利润", "Net Income", "净利润"],
+    "营业收入": ["主营业务收入", "营业总收入", "Revenue", "营业收入"],
+    "营业成本": ["主营业务成本", "营业总成本", "Cost of Goods Sold", "营业成本"],
+    "产品销售收入": ["产品销售收入", "商品销售收入"],
+    "服务收入": ["服务收入", "技术服务收入", "服务业务收入"],
+    "合计": ["合计", "总计", "Total"]
+  },
+  "rules": [
+    {
+      "id": "RULE-FIN-01",
+      "name": "营收成本利润平衡等式",
+      "formula": "营业收入 - 营业成本 == 净利润",
+      "tolerance": 0.01,
+      "description": "检验营业毛利润与成本扣除逻辑自洽性",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "RULE-FIN-02",
+      "name": "分项销售收入合计等式",
+      "formula": "产品销售收入 + 服务收入 == 合计",
+      "tolerance": 0.01,
+      "description": "检验主营收入明细汇总与报表合计项是否一致",
+      "severity": "CRITICAL"
+    },
+    {
+      "id": "RULE-FIN-03",
+      "name": "营业收入一致性校验",
+      "formula": "合计 == 营业收入",
+      "tolerance": 0.01,
+      "description": "校验报表分部汇总合计与损益表营业收入的映射一致性",
+      "severity": "WARNING"
+    }
+  ]
+}
+

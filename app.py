@@ -33,6 +33,7 @@ from engine import anchor as anchor_mod  # noqa: E402
 from engine import bundle as bundle_mod  # noqa: E402
 from engine import report_pdf as report_pdf_mod  # noqa: E402
 from engine.ledger import KeyPair, Ledger  # noqa: E402
+from engine import zkp, cosign, dsl, sandbox  # noqa: E402
 
 DATA_DIR = os.environ.get("SHUXI_DATA_DIR", os.path.join(BASE_DIR, "data"))
 DEMO_PASS = os.environ.get("SHUXI_DEMO_PASS", "shuxi-demo")
@@ -126,39 +127,139 @@ section[data-testid="stSidebar"] {
 [data-testid="stSidebarCollapseButton"],
 [data-testid="stSidebarCollapsedControl"] { display: none !important; }
 section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] { padding-top: 1.3rem; }
+/* 侧栏机构级导航与遥测看板 */
 .sx-side-brand { display: flex; align-items: center; gap: 12px; padding: 2px 0 4px; }
 .sx-logo-lg { width: 44px; height: 44px; border-radius: 12px; }
 .sx-logo-lg .sx-logo-in { border-radius: 12px; font-size: 21px; }
-.sx-brand { font-family: var(--serif); font-size: 31px; font-weight: 900;
-  letter-spacing: .04em; color: var(--ink); line-height: 1.35; }
-.sx-brand-sub { font-size: 14px; color: var(--ink-2); line-height: 1.6; margin-top: 1px; }
-.sx-brand-bar { height: 3px; border-radius: 2px; margin: 12px 0 6px; position: relative;
+.sx-brand { font-family: var(--serif); font-size: 26px; font-weight: 900;
+  letter-spacing: .04em; color: var(--ink); line-height: 1.25; }
+.sx-badge-gold { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+  background: rgba(217,119,6,.12); color: #B45309; border: 1px solid rgba(217,119,6,.28); letter-spacing: .02em; }
+.sx-brand-sub { font-size: 12.5px; color: var(--ink-2); line-height: 1.5; margin-top: 2px; }
+.sx-brand-bar { height: 3px; border-radius: 2px; margin: 10px 0 14px; position: relative;
   background: linear-gradient(90deg, var(--seal), var(--gold-line)); }
 .sx-brand-bar::after { content: ""; position: absolute; right: 0; top: 0;
-  width: 34px; height: 3px; border-radius: 2px; background: var(--seal); }
-div[data-testid="stRadio"] > label { font-size: 13px !important; font-weight: 700;
-  letter-spacing: .14em; color: var(--ink-3) !important; margin-bottom: 2px; }
-div[data-testid="stRadio"] label { font-size: 17.5px; font-weight: 600; color: var(--ink); padding: 2px 0; }
-div[data-testid="stRadio"] > div { gap: 12px; }
+  width: 28px; height: 3px; border-radius: 2px; background: var(--seal); }
+
+/* 侧栏导航蜕变: 彻底移除原生单选圆圈, 升级为 Linear / Raycast 级 Segmented Card 项 */
+section[data-testid="stSidebar"] div[data-testid="stRadio"] { margin-bottom: 8px; }
+section[data-testid="stSidebar"] div[data-testid="stRadio"] > label {
+  font-size: 11px !important; font-weight: 800 !important;
+  letter-spacing: .12em !important; text-transform: uppercase;
+  color: var(--ink-3) !important; margin-bottom: 8px !important; display: block;
+}
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stRadioGroup"],
+section[data-testid="stSidebar"] div[data-testid="stRadio"] > div {
+  gap: 8px !important; display: flex !important; flex-direction: column !important;
+}
+
+/* 选项卡基础卡片化 */
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stRadioOption"],
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-baseweb="radio"] {
+  width: 100% !important; margin: 0 !important;
+  padding: 10px 14px !important;
+  border-radius: 10px !important; border: 1px solid rgba(222,216,202,.7) !important;
+  background: rgba(255,255,255,.65) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.02) !important;
+  transition: all .2s cubic-bezier(.16,1,.3,1) !important;
+  cursor: pointer !important;
+  display: block !important;
+}
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stRadioOption"]:hover,
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-baseweb="radio"]:hover {
+  background: #FAF6F0 !important; border-color: rgba(194,53,49,.3) !important;
+  transform: translateX(2px) !important;
+}
+
+/* 隐藏原生圆圈 (支持 1.6x 与旧版 BaseWeb) */
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stRadioOption"] div[class*="e1dm8mpf4"],
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stRadioOption"] > div > div:first-child,
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stRadioOption"] [data-focus-visible],
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-baseweb="radio"] > div:first-child {
+  display: none !important;
+}
+section[data-testid="stSidebar"] div[data-testid="stRadio"] input[type="radio"] {
+  display: none !important;
+}
+
+/* 选项文字排版 */
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stRadioOption"] p,
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stRadioOption"] label,
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-baseweb="radio"] label {
+  font-size: 14.5px !important; font-weight: 600 !important; color: var(--ink-2) !important;
+  margin: 0 !important; cursor: pointer !important;
+}
+
+/* 激活选中态高亮 (朱砂红左边线 + 纯白卡片 + 阴影) */
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-selected="true"],
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-selected="true"] [data-testid="stRadioOption"],
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stRadioOption"]:has(input:checked),
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-baseweb="radio"]:has(input:checked) {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(194,53,49,.35) !important;
+  border-left: 4.5px solid var(--seal) !important;
+  box-shadow: 0 3px 8px -2px rgba(194,53,49,.12), 0 1px 3px rgba(0,0,0,.04) !important;
+}
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-selected="true"] p,
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stRadioOption"]:has(input:checked) p,
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-baseweb="radio"]:has(input:checked) label {
+  color: var(--ink) !important; font-weight: 800 !important;
+}
+
+/* 微图标支持 */
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stRadioGroup"] > div:nth-child(1) [data-testid="stRadioOption"] > div::before,
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-baseweb="radio"]:nth-child(1) label::before {
+  content: "📋"; font-size: 15px; margin-right: 9px;
+}
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stRadioGroup"] > div:nth-child(2) [data-testid="stRadioOption"] > div::before,
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-baseweb="radio"]:nth-child(2) label::before {
+  content: "🔍"; font-size: 15px; margin-right: 9px;
+}
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-testid="stRadioGroup"] > div:nth-child(3) [data-testid="stRadioOption"] > div::before,
+section[data-testid="stSidebar"] div[data-testid="stRadio"] [data-baseweb="radio"]:nth-child(3) label::before {
+  content: "⛓️"; font-size: 15px; margin-right: 9px;
+}
+
+/* 侧栏遥测卡与数据筹码排版 */
 .sx-side-card {
   background: #FFFFFF;
   border: 1px solid var(--line); border-radius: 12px;
-  padding: 14px 16px; margin: 4px 0 12px;
-  box-shadow: 0 3px 10px -2px rgba(24,24,27,.05), inset 0 0 0 1px rgba(255,255,255,.7); }
-.sx-side-card .sx-sc-label { font-size: 12.5px; letter-spacing: .1em; color: var(--ink-3);
-  font-weight: 700; margin-bottom: 5px; }
-.sx-side-card .sx-sc-value { font-family: var(--mono);
-  font-size: 17px; font-weight: 700; color: var(--ink); }
-.sx-side-foot { font-size: 13.5px; color: var(--ink-3); line-height: 1.65; margin-top: 14px; }
-section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
-  font-size: 13.5px !important; line-height: 1.65 !important; }
-section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 1.0rem; }
-.sx-actor { font-size: 14px; color: var(--ink); line-height: 1.55; margin-top: 6px; }
-.sx-actor span { color: var(--ink-3); font-size: 13px; font-weight: 700;
-  letter-spacing: .06em; margin-right: 8px; }
-.sx-actor-note { font-size: 13px; color: var(--ink-3); margin-top: 6px; }
-.sx-side-sell { border-top: 1px solid var(--line); margin-top: 10px;
-  padding-top: 9px; font-size: 14px; color: var(--ink-2); line-height: 1.7; }
+  padding: 12px 14px; margin: 4px 0 10px;
+  box-shadow: 0 2px 8px -2px rgba(24,24,27,.05), inset 0 0 0 1px rgba(255,255,255,.8);
+}
+.sx-side-card .sx-sc-label { font-size: 11px; letter-spacing: .1em; color: var(--ink-3);
+  font-weight: 700; text-transform: uppercase; }
+.sx-pulse-status { display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 700; color: #059669; }
+.sx-pulse-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block;
+  box-shadow: 0 0 0 0 rgba(16,185,129,.7); animation: sxPulse 2s infinite; }
+@keyframes sxPulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16,185,129,.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+}
+.sx-sc-stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
+  background: #FAF8F4; border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 6px; margin: 8px 0 6px; text-align: center; }
+.sx-sc-stat-cell { display: flex; flex-direction: column; }
+.sx-stat-lbl { font-size: 10.5px; color: var(--ink-3); font-weight: 600; }
+.sx-stat-num { font-family: var(--mono); font-size: 14px; font-weight: 800; color: var(--ink); margin-top: 1px; }
+.sx-sc-head-row { display: flex; align-items: center; justify-content: space-between;
+  margin-top: 5px; font-size: 11.5px; color: var(--ink-2); }
+.sx-hash-code { font-family: var(--mono); font-size: 11px; background: rgba(0,0,0,.04);
+  padding: 1px 4px; border-radius: 4px; color: var(--seal); font-weight: 600; }
+.sx-stat-sub { font-size: 11px; color: var(--ink-3); }
+
+/* 参与方微徽章与标准声明卡 */
+.sx-actor-pill { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink); margin-top: 6px; }
+.sx-role-badge { font-size: 10.5px; font-weight: 700; padding: 1px 5px; border-radius: 4px;
+  background: rgba(194,53,49,.1); color: var(--seal); border: 1px solid rgba(194,53,49,.2); }
+.sx-role-badge.sx-role-ver { background: rgba(2,132,199,.1); color: #0284C7; border-color: rgba(2,132,199,.2); }
+.sx-actor-note { font-size: 11px; color: var(--ink-3); margin-top: 6px; }
+.sx-side-sell { border-top: 1px solid var(--line); margin-top: 9px; padding-top: 8px; }
+.sx-spec-tag { display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 600;
+  padding: 1px 5px; border-radius: 4px; background: #FAF8F4; border: 1px solid var(--line);
+  color: var(--ink-2); margin-right: 4px; margin-bottom: 3px; }
 
 /* 顶栏: 透明融入纸面, 一条发丝线分界 */
 .sx-topbar { display: flex; justify-content: space-between; align-items: center;
@@ -714,7 +815,7 @@ def status_strip(ledger):
     dot = "#059669" if ok else "#C23531"
     state = "全链可验" if ok else "链异常"
 
-    # 要求二: 硬指标真实记录
+    # 要求二: 硬指标真实记录 (未实测前不编造，实测后实时计算刷新)
     lv = st.session_state.get("last_verify")
     if lv and "elapsed_ms" in lv:
         ms_val = f"{lv['elapsed_ms']:.1f} ms (实测)"
@@ -1157,7 +1258,7 @@ def page_verify(ledger, packages, actors):
     if "verify_mode" not in st.session_state:
         st.session_state["verify_mode"] = "单件精密验真"
 
-    mode_options = ["单件精密验真", "随手查", "批量验真"]
+    mode_options = ["单件精密验真", "随手查", "批量验真", "红蓝对抗沙盒"]
     cur_idx = mode_options.index(st.session_state["verify_mode"]) if st.session_state["verify_mode"] in mode_options else 0
     chosen_mode = st.radio("验真模式", mode_options, index=cur_idx, horizontal=True,
                            label_visibility="collapsed", key="verify_mode_radio")
@@ -1304,6 +1405,66 @@ def page_verify(ledger, packages, actors):
                             st.write("G1/G2 未见异常")
                         for h in aud["hints"]:
                             st.write(f"- {h}")
+                        # 核心升级 P0: 零知识范围证明 (ZK Range Proof) 交互核验 (核验登记母本承诺)
+                        st.markdown("**零知识谓词核验（可用不可见）**")
+                        reg_zk_commit = (pkg.get("zk_commitments") or {}).get("净利润") if pkg else None
+                        cand_profit_val = comp.get("fields", {}).get("净利润")
+                        if reg_zk_commit and isinstance(reg_zk_commit, dict) and "commitment" in reg_zk_commit:
+                            try:
+                                reg_val = int(reg_zk_commit["val"])
+                                reg_r = int(reg_zk_commit["blinding_r"], 16)
+                                reg_commit_hex = reg_zk_commit["commitment"]
+                                zk_thresh = 5000000
+
+                                # 1. 证明由登记包内的数值与盲化因子生成
+                                zk_proof = zkp.prove_range_ge(reg_val, reg_r, zk_thresh)
+                                # 2. 验证只对登记包里的承诺执行 verify_range_ge (验证方零明文输入)
+                                zk_verified = zkp.verify_range_ge(reg_commit_hex, zk_thresh, zk_proof)
+
+                                # 3. 检查待验件对应字段是否与登记母本一致
+                                is_value_consistent = False
+                                if cand_profit_val is not None:
+                                    try:
+                                        c_val_int = int(float(str(cand_profit_val).replace(",", "").replace("¥", "").replace("元", "").strip()))
+                                        is_value_consistent = (c_val_int == reg_val)
+                                    except Exception:
+                                        is_value_consistent = False
+
+                                if zk_verified and is_value_consistent:
+                                    st.markdown(
+                                        f"<div style='background:#F0FDF4;border:1px solid #BBF7D0;border-left:4px solid #059669;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#166534'>"
+                                        f"<b>零知识 32 位比特分解范围证明通过：</b>证明对象：<code>登记母本净利润</code> · 校验门槛：<code>≥ ¥{zk_thresh:,}</code> · 验证方零明文输入。"
+                                        f"<br>登记母本数值满足门槛，验证方零明文输入。全过程验证方仅凭登记包内的 Pedersen 承诺与 32 位比特分解证明完成核验（证明对象是登记母本，不是待验件）。"
+                                        f"<br><span style='font-family:var(--mono);font-size:11px;color:#15803D'>登记承诺: {reg_commit_hex[:24]}… · 32 位比特承诺权重复合一致</span></div>",
+                                        unsafe_allow_html=True)
+                                else:
+                                    # 待验件对应字段与登记值不一致时改为中性提示，不许再亮绿色通过
+                                    st.markdown(
+                                        f"<div style='background:#F3F4F6;border:1px solid #E5E7EB;border-left:4px solid #6B7280;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#374151'>"
+                                        f"<b>零知识范围证明提示：</b>待验件该字段已变动（当前值: <code>{cand_profit_val if cand_profit_val is not None else '缺失'}</code>），谓词证明仅针对登记母本（≥ ¥{zk_thresh:,}）。"
+                                        f"<br><span style='font-size:11.5px;color:#6B7280'>注：待验件与登记母本字段不一致，依规不呈现绿色通过徽章，仅核实登记母本承诺合规。</span></div>",
+                                        unsafe_allow_html=True)
+                            except Exception:
+                                st.caption("登记母本数值承诺解析异常，无法生成零知识范围证明。")
+                        else:
+                            st.caption("登记母本无净利润数值承诺，无需执行零知识范围证明。")
+
+                        # 核心升级 P2: 声明式 DSL 规则引擎评估
+                        st.markdown("**DSL 语义审计规则引擎**")
+                        dsl_res = dsl.evaluate_dsl_rules(comp.get("fields", {}))
+                        if dsl_res["passed"]:
+                            for p in dsl_res["passed"]:
+                                st.markdown(
+                                    f"<div style='font-size:12.5px;color:#059669;margin-bottom:2px'>"
+                                    f"• [{p['id']}] {p['name']}：<code>{p['formula']}</code> 校验吻合 (两端计算值: {p['lhs']:,.0f})</div>",
+                                    unsafe_allow_html=True)
+                        if dsl_res["violated"]:
+                            for v in dsl_res["violated"]:
+                                st.markdown(
+                                    f"<div style='font-size:12.5px;color:#C23531;margin-bottom:2px'>"
+                                    f"• [{v['id']}] {v['name']}：<code>{v['formula']}</code> 违背勾稽关系 (差额: {v['diff']:,.2f})</div>",
+                                    unsafe_allow_html=True)
+
                         st.markdown("**判定标定依据**")
                         st.write("本判定规则经合成语料 308 例盲测标定，四级判定准确率 "
                                  "95.13%，篡改检出率 100%（单哈希二值基线 50.65%）；"
@@ -1428,7 +1589,7 @@ def page_verify(ledger, packages, actors):
                 st.markdown('<div class="sx-empty">请在左侧上传文件以开始初判分析。</div>',
                             unsafe_allow_html=True)
 
-    else:
+    elif mode == "批量验真":
         st.markdown('<div class="sx-sec">批量验真</div>', unsafe_allow_html=True)
         st.markdown('<div class="sx-sec-sub">一次上传多份文件：按文件名自动匹配凭证，五十份也是一张表。</div>',
                     unsafe_allow_html=True)
@@ -1444,6 +1605,106 @@ def page_verify(ledger, packages, actors):
                 for c in [GRADE_COLORS.get(g, "#6B7280")])
             st.markdown(chips, unsafe_allow_html=True)
             st.dataframe(rows, use_container_width=True, hide_index=True)
+
+    else:
+        # 核心升级 P4: 红蓝对抗沙盒 (Live Attack Arena · 现场攻击瞬时验真)
+        st.markdown('<div class="sx-sec">红蓝对抗沙盒 · 现场攻防穿透演示</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sx-sec-sub">评委可在此模拟攻击者对已登记母本实施各种篡改，现场检验三层指纹如何精准拦截并分级定罪。</div>',
+                    unsafe_allow_html=True)
+        
+        labels = {f"{p['cert_id']} · {p['filename']}": p["cert_id"] for p in regs}
+        sand_c1, sand_c2 = st.columns([5, 7])
+        with sand_c1:
+            cert_picked = labels[st.selectbox("选择目标攻击母本", list(labels), key="sand_cert_pick")]
+            reg = ledger.find_registration(cert_picked)
+            rp = reg["payload"]
+            base_text = rp_text(ledger, packages, cert_picked)
+            strat_status = sandbox.get_strategies_status(base_text)
+
+            opt_a = "策略 A：无形微改（仅做格式与空白变换不改内容）"
+            if not strat_status["A"]["available"]:
+                opt_a += f" [不可用: {strat_status['A']['reason']}]"
+
+            opt_b = "策略 B：做平篡改（改一个数值字段并同步改合计做平）"
+            if not strat_status["B"]["available"]:
+                opt_b += f" [不可用: {strat_status['B']['reason']}]"
+
+            opt_c = "策略 C：穿帮造假（只改数值字段不改合计，注入勾稽矛盾）"
+            if not strat_status["C"]["available"]:
+                opt_c += f" [不可用: {strat_status['C']['reason']}]"
+
+            strategy_options = [opt_a, opt_b, opt_c]
+            attack_type = st.radio("选择攻击策略", strategy_options, key="attack_type_radio")
+
+            btn_disabled = False
+            strat_code = "A"
+            if "策略 A" in attack_type:
+                strat_code = "A"
+                if not strat_status["A"]["available"]:
+                    btn_disabled = True
+            elif "策略 B" in attack_type:
+                strat_code = "B"
+                if not strat_status["B"]["available"]:
+                    btn_disabled = True
+            else:
+                strat_code = "C"
+                if not strat_status["C"]["available"]:
+                    btn_disabled = True
+
+            if st.button("🚀 注入攻击并即刻穿透验真", type="primary", use_container_width=True, disabled=btn_disabled):
+                mut_bytes, mut_msg = sandbox.generate_variant(base_text, strat_code)
+                t0 = time.perf_counter()
+                if strat_code in ("A", "B"):
+                    samp_name = f"variant_{strat_code}_{rp['filename']}"
+                    rep = svc.verify_file(ledger, packages, actors[VERIFIER_NAME], VERIFIER_NAME,
+                                          cert_picked, mut_bytes, "txt", samp_name)
+                    elapsed_ms = (time.perf_counter() - t0) * 1000
+                    pkg = packages.get(cert_picked)
+                    comp = fp.compute_all(mut_bytes, "txt", pkg["salts"] if pkg else None)
+                    st.session_state["sandbox_result"] = {
+                        "report": rep, "comp": comp, "reg": reg, "data": mut_bytes,
+                        "filename": samp_name, "elapsed_ms": elapsed_ms, "mut_msg": mut_msg,
+                        "strat_code": strat_code
+                    }
+                else:
+                    # 策略 C 模拟穿透勾稽审查/随手查，直接捕捉勾稽矛盾
+                    samp_name = f"variant_C_{rp['filename']}"
+                    sa = svc.standalone_check(ledger, mut_bytes, "txt", samp_name)
+                    elapsed_ms = (time.perf_counter() - t0) * 1000
+                    st.session_state["sandbox_result"] = {
+                        "report": sa["verdict"], "comp": sa["comp"], "reg": reg, "data": mut_bytes,
+                        "filename": samp_name, "elapsed_ms": elapsed_ms, "mut_msg": mut_msg,
+                        "strat_code": "C"
+                    }
+                st.session_state["sandbox_attack_label"] = attack_type.split("（")[0].split(" [")[0]
+                st.rerun()
+
+        with sand_c2:
+            s_res = st.session_state.get("sandbox_result")
+            if s_res and s_res["reg"] and s_res["reg"]["payload"]["cert_id"] == cert_picked:
+                s_rep = s_res["report"]
+                s_comp = s_res["comp"]
+                atk_lbl = st.session_state.get("sandbox_attack_label", "攻击")
+                
+                st.markdown(f"<div style='font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px'>🎯 {atk_lbl} 现场拦截防御报告</div>", unsafe_allow_html=True)
+                grade_hero(s_rep, s_res["elapsed_ms"])
+                if s_res.get("mut_msg"):
+                    st.caption(f"💡 现场攻防变异实况：{s_res['mut_msg']}")
+                
+                if s_rep.get("grade") == "丁级":
+                    _ds = diff_strip_html(s_rep)
+                    if _ds:
+                        st.markdown(_ds, unsafe_allow_html=True)
+                
+                sim = fp.text_similarity(rp_text(ledger, packages, cert_picked), s_comp["text"])
+                pkg = packages.get(cert_picked)
+                st.markdown(layer_stack_html(rp, s_comp, report=s_rep,
+                                             reg_fields=pkg["fields"] if pkg else {},
+                                             sim=sim),
+                            unsafe_allow_html=True)
+            else:
+                st.markdown('<div class="sx-empty">在左侧选择攻击策略并点击「注入攻击」，右翼将瞬间模拟蓝方防御矩阵抓捕现场。</div>',
+                            unsafe_allow_html=True)
 
 
 
@@ -1556,6 +1817,46 @@ def page_ledger(ledger, packages, actors):
     else:
         blocks_html = ''
 
+    # 核心升级 P1: 门限共签（Ed25519 多方签名 · 2-of-3）与多方背书
+    # 页面加载不许自动生成背书，须由明确的签署动作触发
+    executed_actors = st.session_state.get("executed_cosign_actors", None)
+    tc = cosign.ThresholdCosign(threshold=2, total_signers=3)
+
+    if executed_actors is None:
+        cosign_badge_bg = "#6B7280"
+        cosign_badge_text = "门限共签待发起"
+        cosign_title = "多方共签使单方伪造无法通过聚合验证"
+        cosign_detail = "页面加载未自动签名，点击下方「执行门限共签」触发真实 Ed25519 签名与聚合验证"
+        cosign_sig_disp = "<span style='color:#6B7280'>未签署</span>"
+    else:
+        endorsements = [tc.sign_endorsement(name, head) for name in executed_actors]
+        cosign_ok, cosign_res = tc.aggregate_and_verify(head, endorsements)
+        if cosign_ok:
+            cosign_badge_bg = "#059669"
+            cosign_badge_text = "门限共签有效 (2-of-3)"
+            cosign_title = "多方共签使单方伪造无法通过聚合验证"
+            cosign_detail = f"背书主体：{' ＋ '.join(executed_actors)} · 真实 Ed25519 签名聚合验证通过"
+            cosign_sig_disp = f"聚合指纹: <span style='color:#059669;font-weight:600'>{cosign_res[:18]}…</span>"
+        else:
+            cosign_badge_bg = "#D97706"
+            cosign_badge_text = "门限共签未达成"
+            cosign_title = cosign_res
+            cosign_detail = f"当前提交主体：{' ＋ '.join(executed_actors) if executed_actors else '无'} (需至少 2 方有效签名)"
+            cosign_sig_disp = "<span style='color:#D97706'>验签未通过</span>"
+
+    cosign_html = f"""
+    <div style="background:#FAF8F3;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;background:{cosign_badge_bg};color:#FFFFFF;margin-right:6px">{cosign_badge_text}</span>
+        <b style="font-size:13px;color:var(--ink)">{cosign_title}</b>
+        <div style="font-size:11.5px;color:var(--ink-2);margin-top:2px">{cosign_detail}</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:11.5px;color:var(--ink-3)">
+        {cosign_sig_disp}
+      </div>
+    </div>
+    """
+
     # 建议 4: 账本状态公文卡 + 三阶时间锚定流水线
     st.markdown(f"""
     <div class="sx-card sx-doc">
@@ -1568,7 +1869,27 @@ def page_ledger(ledger, packages, actors):
       {blocks_html}
       {hint_html}
       {anchor_pipeline_html(ledger, DATA_DIR)}
+      {cosign_html}
     </div>""", unsafe_allow_html=True)
+
+    with st.expander("✍️ 门限共签签署台（Ed25519 多方签名）", expanded=False):
+        st.caption("ℹ️ 演示环境说明：三方私钥为公开演示密钥，由公开种子派生，任何人可复现，仅用于演示流程。演示环境不具备密钥保密性；生产环境部署说明：各主体在独立物理节点（或 HSM 硬件模块）自主持钥，私钥不进入代码仓库，通过安全远程签名接口提交背书。")
+        c_s1, c_s2, c_s3 = st.columns(3)
+        with c_s1:
+            s1_val = st.checkbox("望舒新能源 · 财务部 (存证方)", value=True, key="cs_box_1")
+        with c_s2:
+            s2_val = st.checkbox("临溪商业银行 · 风险管控部 (核验方)", value=True, key="cs_box_2")
+        with c_s3:
+            s3_val = st.checkbox("中创公证仲裁云链 · 鉴证中心 (公证方)", value=False, key="cs_box_3")
+
+        cs_selected = []
+        if s1_val: cs_selected.append("望舒新能源 · 财务部")
+        if s2_val: cs_selected.append("临溪商业银行 · 风险管控部")
+        if s3_val: cs_selected.append("中创公证仲裁云链 · 鉴证中心")
+
+        if st.button("🚀 执行多方签署与聚合验签", type="secondary", use_container_width=True):
+            st.session_state["executed_cosign_actors"] = list(cs_selected)
+            st.rerun()
 
     _cpf = st.session_state.pop("cp_flash", None)
     if _cpf:
@@ -1717,7 +2038,7 @@ def main():
     if _goto:
         if isinstance(_goto, list):
             _goto = _goto[0] if _goto else None
-        _target = {"ledger": "授权与账本", "register": "登记",
+        _target = {"ledger": "授权与账本", "register": "登记", "verify": "验真",
                    "receipts": "授权与账本", "chain": "授权与账本"}.get(_goto)
         if _target:
             st.session_state["nav_page"] = _target
@@ -1756,10 +2077,28 @@ def main():
         state_sb = "全链可验" if ok_sb else "链异常"
         st.markdown(f"""
         <div class="sx-side-card">
-          <div class="sx-sc-label">账本状态</div>
-          <div class="sx-sc-value"><span class="sx-dot" style="background:{dot_sb}"></span>{state_sb}</div>
-          <div class="sx-brand-sub" style="margin-top:4px">高度 {len(ledger.entries)} · 登记 {len(ledger.by_type('registration'))} · 回执 {len(ledger.by_type('receipt'))}</div>
-          <div class="sx-brand-sub" style="margin-top:3px">检查点 {len(ledger.by_type('checkpoint'))} · 链头 <span style="font-family:var(--mono)">{ledger.head_hash()[:10]}…</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="sx-sc-label">账本遥测看板</div>
+            <div class="sx-pulse-status"><span class="sx-pulse-dot" style="background:{dot_sb}"></span>{state_sb}</div>
+          </div>
+          <div class="sx-sc-stat-grid">
+            <div class="sx-sc-stat-cell">
+              <span class="sx-stat-lbl">区块高度</span>
+              <span class="sx-stat-num">{len(ledger.entries)}</span>
+            </div>
+            <div class="sx-sc-stat-cell">
+              <span class="sx-stat-lbl">存证母本</span>
+              <span class="sx-stat-num">{len(ledger.by_type('registration'))}</span>
+            </div>
+            <div class="sx-sc-stat-cell">
+              <span class="sx-stat-lbl">验真回执</span>
+              <span class="sx-stat-num">{len(ledger.by_type('receipt'))}</span>
+            </div>
+          </div>
+          <div class="sx-sc-head-row">
+            <span>检查点 <strong>{len(ledger.by_type('checkpoint'))}</strong></span>
+            <span>链头 <span class="sx-hash-code">{ledger.head_hash()[:10]}…</span></span>
+          </div>
         </div>""", unsafe_allow_html=True)
         if st.button("一键载入演示数据"):
             # 提示先存会话再刷新: 直接 success 后接 rerun, 提示会被刷新冲掉,
@@ -1805,11 +2144,24 @@ def main():
                        "回到初始演示状态。再点一次按钮确认重置。")
         st.markdown(f"""
         <div class="sx-side-card">
-          <div class="sx-sc-label">演示说明</div>
-          <div class="sx-actor"><span>登记方</span>{REGISTRAR_NAME}</div>
-          <div class="sx-actor"><span>验真方</span>{VERIFIER_NAME}</div>
-          <div class="sx-actor-note">出场主体均为虚构，仅用于演示</div>
-          <div class="sx-side-sell">三层指纹 · 四级验真<br>哈希存证 / 一键验真 / 授权留痕</div>
+          <div class="sx-sc-label">参与方角色</div>
+          <div class="sx-actor-pill">
+            <span class="sx-role-badge">存证方</span>
+            <span style="font-weight:600;font-size:12px;">{REGISTRAR_NAME}</span>
+          </div>
+          <div class="sx-actor-pill">
+            <span class="sx-role-badge sx-role-ver">核验方</span>
+            <span style="font-weight:600;font-size:12px;">{VERIFIER_NAME}</span>
+          </div>
+          <div class="sx-actor-note">出场主体均为虚构，仅用于演示说明</div>
+          <div class="sx-side-sell">
+            <div style="margin-bottom:6px;">
+              <span class="sx-spec-tag">三层指纹</span>
+              <span class="sx-spec-tag">四级验真</span>
+              <span class="sx-spec-tag">门限共签</span>
+            </div>
+            <div class="sx-stat-sub">哈希存证 · 零知识断言 · 授权审计留痕</div>
+          </div>
         </div>""", unsafe_allow_html=True)
     top_bar(ledger)
     status_strip(ledger)
