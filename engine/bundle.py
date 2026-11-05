@@ -15,6 +15,8 @@
   披露字段表与盐) 由登记方决定, 这本身就是一种授权行为。
 - 证据包内是导出时刻的账本副本; 导出之后发生的作废等状态变化
   不在包内, 以在线账本为准。
+- 证据包不含任何私钥材料: 登记包中的口令加密私钥 (privkey_pem)
+  导出时剔除, 复核只需字段表/盐/抽取文本, 不需要私钥。
 """
 import json
 import os
@@ -26,6 +28,8 @@ from .ledger import KeyPair, Ledger
 
 BUNDLE_FORMAT = "shuxi-evidence-bundle/1"
 MAX_ENTRIES = 2000
+# 导出时从登记包剔除的敏感键 (私钥绝不随证据包外发)
+_BUNDLE_EXCLUDE_KEYS = ("privkey_pem",)
 
 
 def build_bundle(ledger: Ledger, packages: svc.PackageStore, cert_id: str,
@@ -39,13 +43,15 @@ def build_bundle(ledger: Ledger, packages: svc.PackageStore, cert_id: str,
     pkg = packages.get(cert_id)
     if pkg is None:
         raise ValueError("登记包不存在, 无法签发完整证据包")
+    # 浅拷贝后剔除: 不改动 PackageStore 内存中的原对象
+    safe_pkg = {k: v for k, v in pkg.items() if k not in _BUNDLE_EXCLUDE_KEYS}
     checkpoints = ledger.by_type("checkpoint")
     return {
         "format": BUNDLE_FORMAT,
         "spec_version": svc.fp.SPEC_VERSION,
         "cert_id": cert_id,
         "registration": reg,
-        "package": pkg,
+        "package": safe_pkg,
         "entries": ledger.entries,
         "checkpoint": checkpoints[-1] if checkpoints else None,
         "report": report,

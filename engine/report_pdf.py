@@ -102,6 +102,10 @@ def build_report_pdf(ledger, packages, cert_id, report,
     freg, fbold, embedded = _register_fonts(page)
     pen = _Pen(page, freg, fbold)
 
+    # 鎏金色公文内边框 (细线防伪)
+    page.draw_rect(fitz.Rect(14, 14, PW - 14, PH - 14), color=GOLD, width=1.0)
+    page.draw_rect(fitz.Rect(18, 18, PW - 18, PH - 18), color=(0.93, 0.88, 0.78), width=0.5)
+
     # 红抬头
     page.draw_rect(fitz.Rect(0, 0, PW, 66), fill=RED, color=RED)
     pen.text(M, 41, "数 玺", size=24, bold=True, color=(1, 1, 1))
@@ -135,14 +139,21 @@ def build_report_pdf(ledger, packages, cert_id, report,
     for r in report.get("reasons") or []:
         ry = pen.wrap(178, ry, "· " + str(r), size=10.5, width=246,
                       leading=14.5)
-    sx, sy = PW - M - 96, top - 13
-    page.draw_rect(fitz.Rect(sx, sy, sx + 96, sy + 76), color=RED, width=2)
-    page.draw_rect(fitz.Rect(sx + 4, sy + 4, sx + 92, sy + 72),
+    # 矢量朱砂印章: 印文按等级换 (甲级核验吻合、乙级内容等价、丙级勾稽存疑、丁级篡改存疑)
+    SEAL_TEXTS = {
+        "甲级": "核验吻合",
+        "乙级": "内容等价",
+        "丙级": "勾稽存疑",
+        "丁级": "篡改存疑",
+    }
+    seal_txt = SEAL_TEXTS.get(grade, "数玺核验")
+    sx, sy = PW - M - 100, top - 13
+    page.draw_rect(fitz.Rect(sx, sy, sx + 100, sy + 76), color=RED, width=2)
+    page.draw_rect(fitz.Rect(sx + 3.5, sy + 3.5, sx + 96.5, sy + 72.5),
                    color=RED, width=0.7)
-    pen.text(sx + 22, sy + 24, "数玺验真", size=11, bold=True, color=RED)
-    pen.text(sx + 26, sy + 50, grade[:2] or "验真", size=17, bold=True,
-             color=RED)
-    pen.text(sx + 30, sy + 66, "SHUXI", size=7.5, color=RED)
+    pen.text(sx + 16, sy + 24, "数玺防伪鉴证", size=10, bold=True, color=RED)
+    pen.text(sx + 14, sy + 50, seal_txt, size=16, bold=True, color=RED)
+    pen.text(sx + 24, sy + 66, "SHUXI VERIFIED", size=6.5, color=RED)
     y = max(top + 56, ry + 6)
 
     # 二、文件与凭证
@@ -218,6 +229,55 @@ def build_report_pdf(ledger, packages, cert_id, report,
     for label, value in rows:
         y = pen.kv(y, label, value or "—", vsize=8.5, label_w=132) + 3
     y += 10
+
+    # 底部回执核验二维码与 OpenTimestamps 时间锚声明
+    try:
+        import io
+        import qrcode
+        qr_text = (
+            f"SHUXI VERIFICATION RECEIPT\n"
+            f"CERT: {cert_id}\n"
+            f"SHA256_ROOT: {exact.get('sha256_root', '')}\n"
+            f"SM3_ROOT: {exact.get('sm3_root', '')}\n"
+            f"SEMANTIC_ROOT: {rp.get('semantic_root', '')}\n"
+            f"RECEIPT_ID: {report.get('receipt_id', '')}\n"
+            f"REPORT_HASH: {report.get('report_hash', '')}"
+        )
+        qr_img = qrcode.make(qr_text, border=1)
+        buf = io.BytesIO()
+        qr_img.save(buf, format="PNG")
+        qr_bytes = buf.getvalue()
+
+        qr_size = 56
+        qr_x = M
+        qr_y = PH - 132
+        page.insert_image(fitz.Rect(qr_x, qr_y, qr_x + qr_size, qr_y + qr_size),
+                          stream=qr_bytes)
+        
+        # 二维码右侧文字与时间锚状态解析
+        pen.text(qr_x + qr_size + 12, qr_y + 14, "回执核验码 · 编码凭证与三层根哈希",
+                 size=9.5, bold=True, color=INK)
+        pen.text(qr_x + qr_size + 12, qr_y + 28, "内容用于与离线证据包(JSON)跨环境对比校验",
+                 size=8.5, color=GRAY)
+        
+        # 外部时间锚声明 (照实写: 已锚定 / 已提交待确认 / 未锚定)
+        if "已获比特币区块链确认" in anchor_line:
+            anchor_status_txt = "外部时间锚：已锚定至比特币区块链（已确认）"
+            anch_color = (0.02, 0.58, 0.40)
+        elif "待比特币网络确认" in anchor_line or "已提交" in anchor_line:
+            anchor_status_txt = "外部时间锚：已提交待确认（OpenTimestamps 日历处理中）"
+            anch_color = GOLD
+        elif "已停用" in anchor_line:
+            anchor_status_txt = "外部时间锚：已停用（离线保护模式，未锚定）"
+            anch_color = GRAY
+        else:
+            anchor_status_txt = f"外部时间锚：{anchor_line}" if anchor_line else "外部时间锚：未锚定"
+            anch_color = GRAY
+
+        pen.text(qr_x + qr_size + 12, qr_y + 44, anchor_status_txt,
+                 size=8.5, bold=True, color=anch_color)
+    except Exception:
+        pass
 
     # 页脚
     page.draw_line(fitz.Point(M, PH - 64), fitz.Point(PW - M, PH - 64),
