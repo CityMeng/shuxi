@@ -1255,7 +1255,11 @@ def page_verify(ledger, packages, actors):
         return
 
     # 要求四: session_state 驱动的分段切换器 (单件精密验真 / 随手查 / 批量验真)
-    if "verify_mode" not in st.session_state:
+    switch_mode = st.session_state.pop("switch_to_mode", None)
+    if switch_mode:
+        st.session_state["verify_mode_radio"] = switch_mode
+        st.session_state["verify_mode"] = switch_mode
+    elif "verify_mode" not in st.session_state:
         st.session_state["verify_mode"] = "单件精密验真"
 
     mode_options = ["单件精密验真", "随手查", "批量验真", "红蓝对抗沙盒"]
@@ -1291,6 +1295,7 @@ def page_verify(ledger, packages, actors):
             for i, (lab, cid) in enumerate(labels.items()):
                 if cid == preselect_cert:
                     default_idx = i
+                    st.session_state["ver_cert_select"] = lab
                     break
 
         with col_ctrl:
@@ -1302,8 +1307,11 @@ def page_verify(ledger, packages, actors):
             rp = reg["payload"]
 
             # 检查是否有随手查带入的待验数据与文件名
+            carried_file = st.session_state.get("carried_file")
             carried_data = st.session_state.pop("preselect_data", None)
             carried_name = st.session_state.pop("preselect_name", None)
+            if carried_file and carried_data is None:
+                carried_name, carried_data = carried_file
 
             pick = st.selectbox("选用演示文件快速填入", ["—"] + list(quick), key="ver_quick_pick")
             up = st.file_uploader("或上传外部待验文件", key="ver_up")
@@ -1311,10 +1319,12 @@ def page_verify(ledger, packages, actors):
             data, fname = None, None
             if up is not None:
                 data, fname = up.getvalue(), up.name
+                st.session_state.pop("carried_file", None)
             elif pick != "—":
                 with open(quick[pick], "rb") as f:
                     data = f.read()
                 fname = pick
+                st.session_state.pop("carried_file", None)
             elif carried_data is not None:
                 data, fname = carried_data, carried_name
                 st.caption(f"已带入文件：{fname} · {len(data)} 字节")
@@ -1578,12 +1588,17 @@ def page_verify(ledger, packages, actors):
                     st.info(f"已自动定位母本凭证 {sa['matched_cert']}：可直接带入生成正式验真回执。")
                     # 要求四: 随手查命中已登记文件时加按钮，点击后自动切换模式并预填凭证
                     if st.button("带入此文件去精密验真", type="primary", use_container_width=True):
-                        st.session_state["verify_mode"] = "单件精密验真"
+                        st.session_state["switch_to_mode"] = "单件精密验真"
                         st.session_state["preselect_cert"] = sa["matched_cert"]
+                        st.session_state["ver_quick_pick"] = "—"
                         if "sa_current_file" in st.session_state:
                             s_name, s_data = st.session_state["sa_current_file"]
+                            st.session_state["carried_file"] = (s_name, s_data)
                             st.session_state["preselect_data"] = s_data
                             st.session_state["preselect_name"] = s_name
+                            st.session_state["last_verify"] = do_verify(
+                                ledger, packages, actors[VERIFIER_NAME],
+                                sa["matched_cert"], s_name, s_data)
                         st.rerun()
             else:
                 st.markdown('<div class="sx-empty">请在左侧上传文件以开始初判分析。</div>',
