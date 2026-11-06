@@ -10,6 +10,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue)](https://www.python.org/)
 [![自动化测试](https://img.shields.io/badge/自动化测试-174%20项全绿-brightgreen)](tests/)
 [![盲测标定](https://img.shields.io/badge/盲测标定-308%20例%20·%2095.13%25-orange)](eval/REPORT.md)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [在线演示](https://shuxi-seal.streamlit.app) · [快速开始](#快速开始) · [部署方式](#部署方式) · [实测数据](#实测数据) · [离线复核](#离线复核)
 
@@ -220,3 +221,7 @@ shuxi/
 ## 反馈
 
 发现判定错误或部署问题，欢迎在 [Issues](https://github.com/CityMeng/shuxi/issues) 里留下复现文件与步骤。判定逻辑的问题请附上证据包，方便离线复现。
+
+## 许可证
+
+本项目采用 [MIT 许可证](LICENSE)，可自由使用、修改与分发，保留版权声明即可。
