@@ -101,7 +101,7 @@ html, body, [class*="css"], .stApp {
 ::-webkit-scrollbar-thumb { background: #CFC7B6; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #B5AA96; }
 #MainMenu, footer, [data-testid="stDecoration"] { visibility: hidden; }
-header[data-testid="stHeader"] { background: transparent !important; height: 1.5rem !important; }
+header[data-testid="stHeader"] { background: transparent !important; z-index: 99999 !important; }
 .block-container { max-width: 1580px; padding: 2.8rem 2.2rem 2.0rem; }
 h1 { font-size: 26px !important; }
 h2 { font-size: 20px !important; }
@@ -113,20 +113,86 @@ p, li, label, .stMarkdown { font-size: 14.5px; line-height: 1.55; }
   color: var(--ink-2) !important; }
 hr { margin: 0.9rem 0 !important; border-color: var(--line) !important; }
 
-/* 侧栏: 深一号宣纸 + 发丝金界 + 印章式品牌 */
+/* 侧栏: 宣纸质感 + 发丝金界 + 响应式丝滑伸缩 (支持移动端扫码自适应与一键弹发展示) */
 section[data-testid="stSidebar"] {
   background: linear-gradient(180deg, #F5F1E8, #EFEAE0);
   border-right: 1px solid var(--line-strong);
-  min-width: 322px; max-width: 322px;
-  transform: none !important;  /* 导航锁定: 禁止滑出 (见下) */
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
-/* 导航做死 (用户 2026-10-27 令): Streamlit 收起侧栏只给 section 加
-   translateX(-300px) 却仍占 322px 布局宽, 主区被顶到右侧、左边留
-   一大条空白。演示系统导航必须常驻: 藏收起钮 + 强制 transform 归零,
-   任何途径都收不起来, 主区永远从侧栏右侧正常排版。 */
-[data-testid="stSidebarCollapseButton"],
-[data-testid="stSidebarCollapsedControl"] { display: none !important; }
+section[data-testid="stSidebar"][aria-expanded="true"] {
+  min-width: 322px;
+  max-width: 322px;
+  width: 322px;
+}
+section[data-testid="stSidebar"][aria-expanded="false"] {
+  min-width: 0 !important;
+  max-width: 0 !important;
+  width: 0 !important;
+  margin-left: -322px !important;
+  border: none !important;
+}
+
+/* 导航展开控制按钮 (浮动式朱砂红印章胶囊: 点击即弹出导航) */
+[data-testid="stSidebarCollapsedControl"] {
+  display: flex !important;
+  visibility: visible !important;
+  top: 0.6rem !important;
+  left: 0.6rem !important;
+  z-index: 999999 !important;
+}
+[data-testid="stSidebarCollapsedControl"] button {
+  background: var(--seal) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(217,119,6,.4) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(194,53,49,.35) !important;
+  padding: 6px 10px !important;
+  transition: all .2s ease !important;
+}
+[data-testid="stSidebarCollapsedControl"] button:hover {
+  background: var(--seal-deep) !important;
+  transform: scale(1.05) !important;
+}
+[data-testid="stSidebarCollapsedControl"] svg {
+  fill: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+/* 侧栏内部收起箭头按钮 (点击即可收起隐藏) */
+[data-testid="stSidebarCollapseButton"] {
+  display: flex !important;
+  visibility: visible !important;
+}
+[data-testid="stSidebarCollapseButton"] button {
+  background: rgba(194,53,49,.08) !important;
+  color: var(--seal) !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(194,53,49,.2) !important;
+  transition: all .2s ease !important;
+}
+[data-testid="stSidebarCollapseButton"] button:hover {
+  background: rgba(194,53,49,.16) !important;
+}
+[data-testid="stSidebarCollapseButton"] svg {
+  fill: var(--seal) !important;
+}
 section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] { padding-top: 1.3rem; }
+
+/* 移动端 (手机扫码) 响应式体验优化 */
+@media (max-width: 768px) {
+  .block-container {
+    padding: 1.2rem 0.9rem !important;
+  }
+  section[data-testid="stSidebar"] {
+    box-shadow: 4px 0 24px rgba(0,0,0,0.2) !important;
+    z-index: 1000000 !important;
+  }
+  section[data-testid="stSidebar"][aria-expanded="true"] {
+    min-width: 85vw !important;
+    max-width: 85vw !important;
+    width: 85vw !important;
+  }
+}
 /* 侧栏机构级导航与遥测看板 */
 .sx-side-brand { display: flex; align-items: center; gap: 12px; padding: 2px 0 4px; }
 .sx-logo-lg { width: 44px; height: 44px; border-radius: 12px; }
@@ -2046,7 +2112,7 @@ def page_ledger(ledger, packages, actors):
 # ---------------------------------------------------------------- 主入口
 
 def main():
-    st.set_page_config(page_title="数玺", page_icon="玺", layout="wide")
+    st.set_page_config(page_title="数玺", page_icon="玺", layout="wide", initial_sidebar_state="auto")
     st.markdown(CSS, unsafe_allow_html=True)
     # 状态条下钻: ?goto= 链接落点 (须在导航单选实例化之前处理)
     _goto = st.query_params.get("goto")
